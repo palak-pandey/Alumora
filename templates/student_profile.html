@@ -8,63 +8,50 @@
 <form method="POST" enctype="multipart/form-data">
 {% csrf_token %}
 
-<!-- PROFILE HEADER -->
+<!-- COVER + PROFILE -->
 
-<div class="card card-primary card-outline">
+<div class="card">
 
-  <div class="card-body box-profile text-center">
+  <!-- Cover -->
+
+  <div style="position: relative;">
+    {% if student.cover_photo %}
+      <img src="{{ student.cover_photo.url }}" 
+           style="width:100%; height:220px; object-fit:cover;">
+    {% else %}
+      <div style="height:220px; background:#ccc;"></div>
+    {% endif %}
 
 ```
-<!-- Profile Image -->
+{% if edit_mode %}
+  <input type="file" name="cover_photo" class="form-control mt-2">
+{% endif %}
+```
+
+  </div>
+
+  <!-- Profile Overlay -->
+
+  <div class="card-body text-center" style="margin-top:-70px;">
+
+```
 {% if student.profile_pic %}
-  <img class="profile-user-img img-fluid img-circle"
-       src="{{ student.profile_pic.url }}"
-       style="width:120px; height:120px; object-fit:cover;">
+  <img src="{{ student.profile_pic.url }}"
+       style="width:140px; height:140px; object-fit:cover; border-radius:50%; border:4px solid white;">
 {% else %}
-  <img class="profile-user-img img-fluid img-circle"
-       src="https://via.placeholder.com/150">
+  <img src="https://via.placeholder.com/150"
+       style="width:140px; height:140px; border-radius:50%; border:4px solid white;">
 {% endif %}
 
 {% if edit_mode %}
   <input type="file" name="profile_pic" class="form-control mt-2">
 {% endif %}
 
-<h3 class="profile-username mt-2">{{ request.user.username }}</h3>
+<h3 class="mt-2">{{ request.user.username }}</h3>
 ```
 
   </div>
-</div>
 
-<!-- COVER PHOTO -->
-
-<div class="card">
-  {% if student.cover_photo %}
-    <img src="{{ student.cover_photo.url }}" 
-         style="width:100%; height:200px; object-fit:cover;">
-  {% else %}
-    <div style="height:200px; background:#ddd;"></div>
-  {% endif %}
-
-{% if edit_mode %} <input type="file" name="cover_photo" class="form-control mt-2">
-{% endif %}
-
-</div>
-
-<!-- BIO -->
-
-<div class="card mt-3">
-  <div class="card-header"><b>Bio</b></div>
-  <div class="card-body">
-
-```
-{% if edit_mode %}
-  <textarea name="bio" class="form-control">{{ student.bio }}</textarea>
-{% else %}
-  <p>{{ student.bio|default:"Add a short bio" }}</p>
-{% endif %}
-```
-
-  </div>
 </div>
 
 <!-- ABOUT -->
@@ -75,7 +62,7 @@
 
 ```
 {% if edit_mode %}
-  <textarea name="about" class="form-control">{{ student.about }}</textarea>
+  <textarea name="about" class="form-control" rows="4">{{ student.about }}</textarea>
 {% else %}
   <p>{{ student.about|default:"Write something about yourself" }}</p>
 {% endif %}
@@ -92,17 +79,20 @@
 
 ```
 {% if edit_mode %}
+  <input type="text" name="university" class="form-control mb-2"
+         value="{{ student.user.institution.name }}">
+
   <input type="text" name="department" class="form-control mb-2"
          value="{{ student.department }}">
 
   <input type="text" name="batch_year" class="form-control"
          value="{{ student.batch_year }}">
 {% else %}
-  <p>
-    <b>{{ student.user.institution.name|default:"Your University" }}</b><br>
-    {{ student.department|default:"Your Course" }}<br>
-    {{ student.batch_year|default:"Year not added" }}
-  </p>
+  <h5>{{ student.user.institution.name|default:"University Name" }}</h5>
+  <p class="mb-1">{{ student.department|default:"Course Name" }}</p>
+  <small class="text-muted">
+    {{ student.batch_year|default:"Timeline not added" }}
+  </small>
 {% endif %}
 ```
 

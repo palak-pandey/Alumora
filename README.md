@@ -29,3 +29,5 @@ git clone https://github.com/palak-pandey/Alumora.git
 cd Alumora
 pip install -r requirements.txt
 python manage.py runserver
+
+```
