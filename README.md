@@ -22,10 +22,10 @@ Alumora is a Django-based alumni-student networking platform designed to connect
 - JavaScript
 - SQLite
 
-## Installation
+# Installation
 
-bash
-git clone https://github.com/YOUR_USERNAME/Alumora.git
+```bash
+git clone https://github.com/palak-pandey/Alumora.git
 cd Alumora
 pip install -r requirements.txt
 python manage.py runserver
