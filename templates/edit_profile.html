@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="content-wrapper">
+
+  <!-- Header -->
+
+  <section class="content-header">
+    <div class="container-fluid d-flex justify-content-between align-items-center">
+      <h1>Edit Profile</h1>
+      <a href="{% url 'dashboard' %}" class="btn btn-secondary btn-sm">
+        Back to Dashboard
+      </a>
+    </div>
+  </section>
+
+  <!-- Main Content -->
+
+  <section class="content">
+    <div class="container-fluid">
+
+
+  <div class="card card-primary">
+    
+    <div class="card-header">
+      <h3 class="card-title">Update Your Details</h3>
+    </div>
+
+    <form method="POST" enctype="multipart/form-data">
+      {% csrf_token %}
+
+      <div class="card-body">
+
+        <div class="row">
+
+          {% for field in form %}
+          <div class="col-md-6">
+            <div class="form-group">
+
+              <label for="{{ field.id_for_label }}">
+                {{ field.label }}
+              </label>
+
+              {{ field }}
+
+              {% if field.help_text %}
+              <small class="form-text text-muted">
+                {{ field.help_text }}
+              </small>
+              {% endif %}
+
+              {% for error in field.errors %}
+              <div class="text-danger">
+                {{ error }}
+              </div>
+              {% endfor %}
+
+            </div>
+          </div>
+          {% endfor %}
+
+        </div>
+
+      </div>
+
+      <div class="card-footer d-flex justify-content-between">
+        <button type="submit" class="btn btn-primary">
+          Save Changes
+        </button>
+
+        <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">
+          Cancel
+        </a>
+      </div>
+
+    </form>
+
+  </div>
+
+</div>
+```
+
+  </section>
+
+</div>
+
+{% endblock %}

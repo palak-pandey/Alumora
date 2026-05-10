@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="container-fluid mt-3">
+  <div class="row">
+
+    <!-- LEFT: Chat List -->
+    <div class="col-md-4">
+      <div class="card" style="height: 80vh; display:flex; flex-direction:column;">
+
+        <!-- Header -->
+        <div class="card-header bg-success text-white">
+          <h5 class="mb-0">Chats</h5>
+        </div>
+
+        <!-- 🔍 Search -->
+        <div class="p-2">
+          <input type="text" id="chatSearch" class="form-control" placeholder="Search chats...">
+        </div>
+
+        <!-- 🔘 Filter -->
+        <div class="px-2 pb-2">
+          <select id="filterChats" class="form-control">
+            <option value="all">All</option>
+            <option value="unread">Unread</option>
+            <option value="read">Read</option>
+          </select>
+        </div>
+
+        <!-- Chat List -->
+        <div class="list-group list-group-flush" id="chatList" style="overflow-y:auto;">
+
+          {% for item in convo_data %}
+          <a href="{% url 'accounts:chat_view' convo_id=item.convo.id %}" 
+             class="list-group-item list-group-item-action chat-item"
+             data-name="{{ item.other_user.username|lower }}"
+             data-unread="{% if item.unread_count > 0 %}true{% else %}false{% endif %}">
+
+            <div class="d-flex justify-content-between">
+              
+              <div>
+                <b>{{ item.other_user.username }}</b><br>
+
+                <small class="text-muted">
+                  {% if item.last_message %}
+                    {{ item.last_message.content|truncatechars:25 }}
+                  {% else %}
+                    Start chat...
+                  {% endif %}
+                </small>
+              </div>
+
+              <div class="text-end">
+                <small class="text-muted d-block">
+                  {% if item.last_message %}
+                    {{ item.last_message.created_at|date:"H:i" }}
+                  {% endif %}
+                </small>
+
+                {% if item.unread_count > 0 %}
+                  <span class="badge bg-success">
+                    {{ item.unread_count }}
+                  </span>
+                {% endif %}
+              </div>
+
+            </div>
+
+          </a>
+          {% empty %}
+          <div class="p-3 text-center text-muted">No chats yet</div>
+          {% endfor %}
+
+        </div>
+
+      </div>
+    </div>
+
+    <!-- RIGHT EMPTY -->
+    <div class="col-md-8 d-flex align-items-center justify-content-center">
+      <h5 class="text-muted">Select a chat 💬</h5>
+    </div>
+
+  </div>  
+</div>
+
+
+<script>
+const searchInput = document.getElementById("chatSearch");
+const filterSelect = document.getElementById("filterChats");
+const chatItems = document.querySelectorAll(".chat-item");
+
+function filterChats() {
+  const search = searchInput.value.toLowerCase();
+  const filter = filterSelect.value;
+
+  chatItems.forEach(item => {
+    const name = item.dataset.name;
+    const isUnread = item.dataset.unread === "true";
+
+    let show = true;
+
+    if (!name.includes(search)) show = false;
+    if (filter === "unread" && !isUnread) show = false;
+    if (filter === "read" && isUnread) show = false;
+
+    item.style.display = show ? "block" : "none";
+  });
+}
+
+searchInput.addEventListener("input", filterChats);
+filterSelect.addEventListener("change", filterChats);
+</script>
+
+{% endblock %}

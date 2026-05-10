@@ -1,0 +1,147 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<h2>Alumni Dashboard </h2>
+
+<!-- ================= STATS ================= -->
+<div class="row">
+  <div class="col-md-4">
+    <div class="card bg-info">
+      <div class="card-body">
+        <h5>Pending Requests</h5>
+        <h3>{{ mentorship_pending.count }}</h3>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card bg-success">
+      <div class="card-body">
+        <h5>Students Mentoring</h5>
+        <h3>{{ mentorship_accepted.count }}</h3>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card bg-warning">
+      <div class="card-body">
+        <h5>Verification Requests</h5>
+        <h3>{{ verification_requests.count }}</h3>
+      </div>
+    </div>
+  </div>
+</div>
+
+<hr>
+
+<!-- ================= MENTORSHIP ================= -->
+<h4>🎓 Your Students</h4>
+<div class="row">
+{% for req in mentorship_accepted %}
+  <div class="col-md-3">
+    <div class="card bg-success">
+      <div class="card-body">
+        <h5>{{ req.student.username }}</h5>
+        <p>Active Mentorship</p>
+      </div>
+    </div>
+  </div>
+{% empty %}
+  <p>No students yet</p>
+{% endfor %}
+</div>
+
+<hr>
+
+<h4>📩 Mentorship Requests</h4>
+<table class="table table-bordered">
+<tr>
+  <th>Student</th>
+  <th>Action</th>
+</tr>
+{% for req in mentorship_pending %}
+<tr>
+  <td>{{ req.student.username }}</td>
+  <td>
+    <a href="{% url 'accounts:accept_request' req.id %}" class="btn btn-success btn-sm">✔ Accept</a>
+    <a href="{% url 'accounts:reject_request' req.id %}" class="btn btn-danger btn-sm">✖ Reject</a>
+  </td>
+</tr>
+{% empty %}
+<tr>
+  <td colspan="2">No pending requests</td>
+</tr>
+{% endfor %}
+</table>
+
+<hr>
+
+<!-- ================= VERIFICATION REQUESTS ================= -->
+<h4> Verification Requests</h4>
+<table class="table table-bordered">
+<tr>
+  <th>User</th>
+  <th>Verification Progress</th>
+  <th>Status</th>
+</tr>
+
+{% for v in verification_requests %}
+<tr>
+  <td>{{ v.user.username }}</td>
+
+  <!-- PROGRESS BAR -->
+  <td style="width:50%;">
+    <div class="progress" style="height:30px;">
+
+      <!-- Faculty -->
+      <div class="progress-bar 
+      {% if v.status != 'PENDING' %}bg-info{% else %}bg-secondary{% endif %}" 
+      style="width:33%; text-align:center;">
+        Faculty {% if v.status != 'PENDING' %}✔{% endif %}
+      </div>
+
+      <!-- Admin -->
+      <div class="progress-bar 
+      {% if v.status == 'ADMIN_APPROVED' or v.status == 'VERIFIED' %}bg-primary{% else %}bg-secondary{% endif %}" 
+      style="width:33%; text-align:center;">
+        Admin {% if v.status == 'ADMIN_APPROVED' or v.status == 'VERIFIED' %}✔{% endif %}
+      </div>
+
+      <!-- Verified -->
+      <div class="progress-bar 
+      {% if v.status == 'VERIFIED' %}bg-success{% else %}bg-secondary{% endif %}" 
+      style="width:34%; text-align:center;">
+        Verified {% if v.status == 'VERIFIED' %}✅{% endif %}
+      </div>
+
+    </div>
+
+    {% if v.status == 'REJECTED' %}
+      <span class="badge bg-danger mt-1">Rejected ❌</span>
+    {% endif %}
+  </td>
+
+  <!-- STATUS COLUMN -->
+  <td>
+    {% if v.status == "PENDING" %}
+      <span class="badge bg-secondary">Pending</span>
+    {% elif v.status == "FACULTY_APPROVED" %}
+      <span class="badge bg-info">Faculty Approved</span>
+    {% elif v.status == "ADMIN_APPROVED" %}
+      <span class="badge bg-primary">Admin Approved</span>
+    {% elif v.status == "VERIFIED" %}
+      <span class="badge bg-success">Verified ✅</span>
+    {% elif v.status == "REJECTED" %}
+      <span class="badge bg-danger">Rejected</span>
+    {% endif %}
+  </td>
+
+</tr>
+{% empty %}
+<tr>
+  <td colspan="3">No verification requests</td>
+</tr>
+{% endfor %}
+</table>
+
+{% endblock %}

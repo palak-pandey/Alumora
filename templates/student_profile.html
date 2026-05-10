@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="content-wrapper">
+<section class="content">
+<div class="container-fluid">
+
+<form method="POST" enctype="multipart/form-data">
+{% csrf_token %}
+
+<!-- PROFILE HEADER -->
+
+<div class="card card-primary card-outline">
+
+  <div class="card-body box-profile text-center">
+
+```
+<!-- Profile Image -->
+{% if student.profile_pic %}
+  <img class="profile-user-img img-fluid img-circle"
+       src="{{ student.profile_pic.url }}"
+       style="width:120px; height:120px; object-fit:cover;">
+{% else %}
+  <img class="profile-user-img img-fluid img-circle"
+       src="https://via.placeholder.com/150">
+{% endif %}
+
+{% if edit_mode %}
+  <input type="file" name="profile_pic" class="form-control mt-2">
+{% endif %}
+
+<h3 class="profile-username mt-2">{{ request.user.username }}</h3>
+```
+
+  </div>
+</div>
+
+<!-- COVER PHOTO -->
+
+<div class="card">
+  {% if student.cover_photo %}
+    <img src="{{ student.cover_photo.url }}" 
+         style="width:100%; height:200px; object-fit:cover;">
+  {% else %}
+    <div style="height:200px; background:#ddd;"></div>
+  {% endif %}
+
+{% if edit_mode %} <input type="file" name="cover_photo" class="form-control mt-2">
+{% endif %}
+
+</div>
+
+<!-- BIO -->
+
+<div class="card mt-3">
+  <div class="card-header"><b>Bio</b></div>
+  <div class="card-body">
+
+```
+{% if edit_mode %}
+  <textarea name="bio" class="form-control">{{ student.bio }}</textarea>
+{% else %}
+  <p>{{ student.bio|default:"Add a short bio" }}</p>
+{% endif %}
+```
+
+  </div>
+</div>
+
+<!-- ABOUT -->
+
+<div class="card mt-3">
+  <div class="card-header"><b>About</b></div>
+  <div class="card-body">
+
+```
+{% if edit_mode %}
+  <textarea name="about" class="form-control">{{ student.about }}</textarea>
+{% else %}
+  <p>{{ student.about|default:"Write something about yourself" }}</p>
+{% endif %}
+```
+
+  </div>
+</div>
+
+<!-- EDUCATION -->
+
+<div class="card mt-3">
+  <div class="card-header"><b>Education</b></div>
+  <div class="card-body">
+
+```
+{% if edit_mode %}
+  <input type="text" name="department" class="form-control mb-2"
+         value="{{ student.department }}">
+
+  <input type="text" name="batch_year" class="form-control"
+         value="{{ student.batch_year }}">
+{% else %}
+  <p>
+    <b>{{ student.user.institution.name|default:"Your University" }}</b><br>
+    {{ student.department|default:"Your Course" }}<br>
+    {{ student.batch_year|default:"Year not added" }}
+  </p>
+{% endif %}
+```
+
+  </div>
+</div>
+
+<!-- SKILLS -->
+
+<div class="card mt-3">
+  <div class="card-header"><b>Skills</b></div>
+  <div class="card-body">
+
+```
+{% if edit_mode %}
+  <input type="text" name="skills" class="form-control"
+         value="{{ student.skills }}">
+{% else %}
+  <p>{{ student.skills|default:"No skills added" }}</p>
+{% endif %}
+```
+
+  </div>
+</div>
+
+<!-- ACTION BUTTONS -->
+
+<div class="text-center mt-4">
+
+{% if edit_mode %} <button type="submit" class="btn btn-success">Save</button> <a href="{% url 'accounts:student_profile' %}" class="btn btn-secondary">Cancel</a>
+{% else %} <a href="?edit=true" class="btn btn-primary">Edit Profile</a>
+{% endif %}
+
+</div>
+
+</form>
+
+</div>
+</section>
+</div>
+
+{% endblock %}

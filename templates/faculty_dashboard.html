@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<h2>Welcome, {{ request.user.username }} (Faculty) 👩‍🏫</h2>
+
+<!-- ================= INFO CARD ================= -->
+<div class="card mb-3">
+    <div class="card-body">
+        This is your Faculty Dashboard 🚀  
+        <br>
+        <small class="text-muted">
+            You are responsible for initial verification of users.
+        </small>
+    </div>
+</div>
+
+<!-- ================= VERIFICATION SECTION ================= -->
+<h4>🔍 Verification Requests</h4>
+
+<table class="table table-bordered">
+<tr>
+  <th>User</th>
+  <th>Progress</th>
+  <th>Status</th>
+  <th>Action</th>
+</tr>
+
+{% for v in verification_requests %}
+<tr>
+  <td>{{ v.user.username }}</td>
+
+  <!-- PROGRESS BAR -->
+  <td style="width:40%;">
+    <div class="progress" style="height:25px;">
+
+      <!-- Faculty -->
+      <div class="progress-bar 
+      {% if v.status != 'PENDING' %}bg-info{% else %}bg-secondary{% endif %}" 
+      style="width:33%; text-align:center;">
+        Faculty {% if v.status != 'PENDING' %}✔{% endif %}
+      </div>
+
+      <!-- Admin -->
+      <div class="progress-bar 
+      {% if v.status == 'ADMIN_APPROVED' or v.status == 'VERIFIED' %}bg-primary{% else %}bg-secondary{% endif %}" 
+      style="width:33%; text-align:center;">
+        Admin {% if v.status == 'ADMIN_APPROVED' or v.status == 'VERIFIED' %}✔{% endif %}
+      </div>
+
+      <!-- Verified -->
+      <div class="progress-bar 
+      {% if v.status == 'VERIFIED' %}bg-success{% else %}bg-secondary{% endif %}" 
+      style="width:34%; text-align:center;">
+        Verified {% if v.status == 'VERIFIED' %}✅{% endif %}
+      </div>
+
+    </div>
+
+    {% if v.status == 'REJECTED' %}
+      <span class="badge bg-danger mt-1">Rejected ❌ (Admin review pending)</span>
+    {% endif %}
+  </td>
+
+  <!-- STATUS -->
+  <td>
+    {% if v.status == "PENDING" %}
+      <span class="badge bg-secondary">Pending</span>
+    {% elif v.status == "FACULTY_APPROVED" %}
+      <span class="badge bg-info">Approved by Faculty</span>
+    {% elif v.status == "ADMIN_APPROVED" %}
+      <span class="badge bg-primary">Admin Approved</span>
+    {% elif v.status == "VERIFIED" %}
+      <span class="badge bg-success">Verified ✅</span>
+    {% elif v.status == "REJECTED" %}
+      <span class="badge bg-danger">Rejected (Needs Admin Review)</span>
+    {% endif %}
+  </td>
+
+  <!-- ACTIONS -->
+  <td>
+    {% if v.status == "PENDING" %}
+      <a href="{% url 'accounts:faculty_approve' v.id %}" class="btn btn-success btn-sm">✔ Approve</a>
+      <a href="{% url 'accounts:faculty_reject' v.id %}" class="btn btn-danger btn-sm">✖ Reject</a>
+    {% else %}
+      <span class="text-muted">No action</span>
+    {% endif %}
+  </td>
+
+</tr>
+{% empty %}
+<tr>
+  <td colspan="4">No verification requests</td>
+</tr>
+{% endfor %}
+</table>
+
+{% endblock %}

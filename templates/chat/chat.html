@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+.chat-box {
+  height: 65vh;
+  overflow-y: auto;
+  padding: 15px;
+  background: #e5ddd5;
+}
+
+.message {
+  max-width: 60%;
+  padding: 10px 14px;
+  border-radius: 15px;
+  margin-bottom: 10px;
+}
+
+.sent {
+  background: #dcf8c6;
+  margin-left: auto;
+}
+
+.received {
+  background: #fff;
+}
+
+.timestamp {
+  font-size: 10px;
+  display: block;
+  text-align: right;
+}
+</style>
+
+<div class="container-fluid mt-3">
+  <div class="row">
+
+    <!-- LEFT CHAT LIST -->
+    <div class="col-md-4">
+      <div class="card" style="height:80vh; overflow-y:auto;">
+        <div class="card-header bg-success text-white">
+          Chats
+        </div>
+
+        <div class="list-group list-group-flush">
+          {% for convo in conversations %}
+          <a href="{% url 'accounts:chat_view' convo_id=convo.id %}" class="list-group-item">
+            <b>
+              {% for user in convo.participants.all %}
+                {% if user != request.user %}
+                  {{ user.username }}
+                {% endif %}
+              {% endfor %}
+            </b>
+          </a>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT CHAT -->
+    <div class="col-md-8">
+      <div class="card">
+
+        <div class="card-header bg-primary text-white">
+          Chat
+        </div>
+
+        <!-- Messages -->
+        <div class="card-body chat-box" id="chat-box">
+
+  {% if is_pending %}
+    <p class="text-center text-muted">No messages yet (Request pending)</p>
+  
+  {% else %}
+
+    {% for msg in messages %}
+      {% if msg.sender == request.user %}
+        <div class="d-flex justify-content-end">
+          <div class="message sent">
+            {{ msg.content }}
+            <span class="timestamp">{{ msg.created_at|date:"H:i" }}</span>
+          </div>
+        </div>
+      {% else %}
+        <div class="d-flex justify-content-start">
+          <div class="message received">
+            <b>{{ msg.sender.username }}</b><br>
+            {{ msg.content }}
+            <span class="timestamp">{{ msg.created_at|date:"H:i" }}</span>
+          </div>
+        </div>
+      {% endif %}
+    {% empty %}
+      <p class="text-center text-muted">No messages yet</p>
+    {% endfor %}
+
+  {% endif %}
+
+</div>       
+        {% if is_pending %}
+  <div class="alert alert-warning text-center m-2">
+    Message request pending
+
+    <br>
+
+    <a href="{% url 'accounts:accept_message_request' convo_id=conversation.id %}" 
+       class="btn btn-success btn-sm mt-2">
+       Accept Request
+    </a>
+  </div>
+{% endif %}
+
+
+
+      <!-- Input -->
+      <div class="card-footer">
+
+  {% if not is_pending %}
+    <form method="POST" action="{% url 'accounts:send_message' convo_id=conversation.id %}">
+      {% csrf_token %}
+      <div class="input-group">
+        <input type="text" name="content" class="form-control" placeholder="Type message..." required>
+        <button class="btn btn-success">Send</button>
+      </div>
+    </form>
+  {% else %}
+    <p class="text-center text-muted">You can message after request is accepted</p>
+  {% endif %}
+
+</div>
+
+<!-- AUTO REFRESH -->
+<script>
+setInterval(function() {
+    fetch(window.location.href)
+    .then(res => res.text())
+    .then(data => {
+        let doc = new DOMParser().parseFromString(data, "text/html");
+        document.getElementById("chat-box").innerHTML =
+            doc.getElementById("chat-box").innerHTML;
+    });
+}, 3000);
+</script>
+
+{% endblock %}

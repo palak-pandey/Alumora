@@ -1,0 +1,144 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Login | Alumora</title>
+
+    <!-- Bootstrap -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
+
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="{% static 'plugins/fontawesome-free/css/all.min.css' %}">
+
+    <style>
+        body {
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #1d3557, #457b9d, #a8dadc);
+            background-size: 400% 400%;
+            animation: bgMove 8s ease infinite;
+            font-family: Arial, sans-serif;
+        }
+
+        @keyframes bgMove {
+            0% {background-position: 0% 50%;}
+            50% {background-position: 100% 50%;}
+            100% {background-position: 0% 50%;}
+        }
+
+        .login-box {
+            width: 100%;
+            max-width: 420px;
+        }
+
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.25);
+            overflow: hidden;
+        }
+
+        .card-header {
+            background: #1d3557;
+            color: white;
+            text-align: center;
+            padding: 25px;
+        }
+
+        .card-header i {
+            font-size: 40px;
+            margin-bottom: 10px;
+        }
+
+        .card-body {
+            padding: 30px;
+        }
+
+        .form-control {
+            border-radius: 10px;
+            height: 45px;
+        }
+
+        .btn-login {
+            background: #1d3557;
+            color: white;
+            border-radius: 10px;
+            height: 45px;
+            font-weight: bold;
+        }
+
+        .btn-login:hover {
+            background: #0f2233;
+        }
+
+        .msg {
+            font-size: 13px;
+            margin-top: 10px;
+        }
+
+        .footer-text {
+            text-align: center;
+            font-size: 12px;
+            margin-top: 15px;
+            color: #ddd;
+        }
+
+    </style>
+</head>
+
+<body>
+
+<div class="login-box">
+
+    <div class="card">
+
+        <!-- HEADER -->
+        <div class="card-header">
+            <i class="fas fa-user-graduate"></i>
+            <h4>Alumora Login</h4>
+            <small>Mentorship Platform</small>
+        </div>
+
+        <!-- BODY -->
+        <div class="card-body">
+
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-danger msg">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+
+            <form method="POST">
+                {% csrf_token %}
+
+                <div class="form-group">
+                    <label>Username</label>
+                    <input type="text" name="username" class="form-control" placeholder="Enter username" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" name="password" class="form-control" placeholder="Enter password" required>
+                </div>
+
+                <button type="submit" class="btn btn-login btn-block">
+                    <i class="fas fa-sign-in-alt"></i> Login
+                </button>
+            </form>
+
+        </div>
+
+    </div>
+
+    <div class="footer-text">
+        Secure Alumni Mentorship System © Alumora
+    </div>
+
+</div>
+
+</body>
+</html>
