@@ -1,7 +1,8 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.core.exceptions import ValidationError 
-
+from django.db.models import Q
+from django.utils import timezone
 
 class Institution(models.Model):
     name = models.CharField(max_length=200)
@@ -90,17 +91,21 @@ class AlumniProfile(models.Model):
 
 #****************************************  Verification Workflow *************************************************
 class VerificationRequest(models.Model):
-    
+
     STATUS_CHOICES = [
-        ('PENDING','Pending'),
+        ('PENDING', 'Pending'),
         ('FACULTY_APPROVED', 'Faculty Approved'),
         ('ADMIN_APPROVED', 'Admin Approved'),
-        ('VERIFIED','Verified'),
-        ('REJECTED','Rejected'),
+        ('VERIFIED', 'Verified'),
+        ('REJECTED', 'Rejected'),
     ]
-    
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='verification_requests')
-    
+
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='verification_requests'
+    )
+
     faculty_approved_by = models.ForeignKey(
         User,
         on_delete=models.SET_NULL,
@@ -108,7 +113,7 @@ class VerificationRequest(models.Model):
         blank=True,
         related_name='faculty_verified_users'
     )
-    
+
     admin_approved_by = models.ForeignKey(
         User,
         on_delete=models.SET_NULL,
@@ -116,13 +121,116 @@ class VerificationRequest(models.Model):
         blank=True,
         related_name='admin_verified_users'
     )
-    
-    status = models.CharField(max_length=30, choices=STATUS_CHOICES, default='PENDING')
-    
+
+    status = models.CharField(
+        max_length=30,
+        choices=STATUS_CHOICES,
+        default='PENDING'
+    )
+
+    rejection_reason = models.TextField(
+        null=True,
+        blank=True
+    )
+
     created_at = models.DateTimeField(auto_now_add=True)
 
+    updated_at = models.DateTimeField(auto_now=True)
+
+    # ---------------- VALIDATIONS ---------------- #
+
+    def clean(self):
+
+        # Suspended users cannot request verification
+        if self.user.is_suspended:
+            raise ValidationError(
+                "Suspended users cannot request verification."
+            )
+
+        # Prevent duplicate pending request
+        if VerificationRequest.objects.filter(
+            user=self.user,
+            status='PENDING'
+        ).exclude(id=self.id).exists():
+
+            raise ValidationError(
+                "You already have a pending verification request."
+            )
+
+        # Faculty approver must be FACULTY
+        if self.faculty_approved_by:
+
+            if self.faculty_approved_by.role != 'FACULTY':
+                raise ValidationError(
+                    "Only faculty can approve at faculty level."
+                )
+
+        # Admin approver must be ADMIN
+        if self.admin_approved_by:
+
+            if self.admin_approved_by.role != 'ADMIN':
+                raise ValidationError(
+                    "Only admins can approve at admin level."
+                )
+
+        # VERIFIED requires both approvals
+        if self.status == 'VERIFIED':
+
+            if not self.faculty_approved_by:
+                raise ValidationError(
+                    "Faculty approval required before verification."
+                )
+
+            if not self.admin_approved_by:
+                raise ValidationError(
+                    "Admin approval required before verification."
+                )
+
+        # ADMIN_APPROVED requires faculty approval first
+        if self.status == 'ADMIN_APPROVED':
+
+            if not self.faculty_approved_by:
+                raise ValidationError(
+                    "Faculty approval required first."
+                )
+
+        # REJECTED should contain rejection reason
+        if self.status == 'REJECTED':
+
+            if not self.rejection_reason:
+                raise ValidationError(
+                    "Please provide rejection reason."
+                )
+
+    # ---------------- SAVE ---------------- #
+
+    def save(self, *args, **kwargs):
+
+        self.full_clean()
+
+        super().save(*args, **kwargs)
+
+    # ---------------- STRING ---------------- #
+
     def __str__(self):
+
         return f"Verification - {self.user.username} ({self.status})"
+
+    # ---------------- META ---------------- #
+
+    class Meta:
+
+        ordering = ['-created_at']
+
+        constraints = [
+
+            models.UniqueConstraint(
+                fields=['user'],
+                condition=Q(status='PENDING'),
+                name='unique_pending_verification_request'
+            )
+
+        ]
 
 # *************************************** Mentorship Request System ******************************************************
 class MentorshipRequest(models.Model):
@@ -195,15 +303,131 @@ class MentorshipRequest(models.Model):
 
 # ****************************************** Suspension log **************************************************************
 class SuspensionLog(models.Model):
-    user = models.ForeignKey(User, on_delete= models.CASCADE, related_name= 'suspension_logs')
-    suspended_by = models.ForeignKey(User, on_delete = models.SET_NULL, null= True, related_name= 'suspensions_done')
+
+    SUSPENSION_TYPE = [
+        ('TEMPORARY', 'Temporary'),
+        ('PERMANENT', 'Permanent'),
+    ]
+
+    DURATION_CHOICES = [
+        (15, '15 Days'),
+        (30, '30 Days'),
+        (45, '45 Days'),
+        (60, '60 Days'),
+    ]
+
+    user = models.ForeignKey(
+        'User',
+        on_delete=models.CASCADE,
+        related_name='suspension_logs'
+    )
+
+    suspended_by = models.ForeignKey(
+        'User',
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='suspensions_done'
+    )
+
+    institution = models.ForeignKey(
+        'Institution',
+        on_delete=models.CASCADE,
+        related_name='suspensions'
+    )
+
     reason = models.TextField()
-    is_active = models.BooleanField(default = True)
+
+    evidence = models.TextField(
+        blank=True,
+        help_text="Screenshots, complaint references, proof etc."
+    )
+
+    suspension_type = models.CharField(
+        max_length=20,
+        choices=SUSPENSION_TYPE
+    )
+
+    duration_days = models.IntegerField(
+        choices=DURATION_CHOICES,
+        null=True,
+        blank=True
+    )
+
+    suspended_until = models.DateTimeField(
+        null=True,
+        blank=True
+    )
+
+    is_active = models.BooleanField(default=True)
+
     created_at = models.DateTimeField(auto_now_add=True)
 
-    def __str__(self):
-        return f"Suspension - {self.user.username}"
+    class Meta:
+        ordering = ['-created_at']
 
+    def clean(self):
+
+        # Prevent self suspension
+        if self.user == self.suspended_by:
+            raise ValidationError(
+                "Users cannot suspend themselves."
+            )
+
+        # Only institution admins can suspend
+        if self.suspended_by.role != 'ADMIN':
+            raise ValidationError(
+                "Only institution admins can suspend users."
+            )
+
+        # Admin can suspend only users of same institution
+        if self.user.institution != self.suspended_by.institution:
+            raise ValidationError(
+                "Admins can suspend only their institution users."
+            )
+
+        # Institution consistency check
+        if self.user.institution != self.institution:
+            raise ValidationError(
+                "Suspension institution mismatch."
+            )
+
+        # Only students and alumni can be suspended
+        if self.user.role not in ['STUDENT', 'ALUMNI']:
+            raise ValidationError(
+                "Only students and alumni can be suspended."
+            )
+
+        # Temporary suspension validation
+        if self.suspension_type == 'TEMPORARY':
+
+            if not self.duration_days:
+                raise ValidationError(
+                    "Temporary suspension requires duration."
+                )
+
+            self.suspended_until = (
+                timezone.now() +
+                timezone.timedelta(days=self.duration_days)
+            )
+
+        # Permanent suspension validation
+        if self.suspension_type == 'PERMANENT':
+
+            self.duration_days = None
+            self.suspended_until = None
+
+    def save(self, *args, **kwargs):
+
+        self.full_clean()
+
+        # Mark user suspended
+        self.user.is_suspended = True
+        self.user.save()
+
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.user.username} - {self.suspension_type}"
 
 #--------------------------------------- Chat system --------------------------------------------------------------------
 
