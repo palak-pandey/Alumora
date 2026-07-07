@@ -8,19 +8,17 @@
     <!-- AdminLTE CSS -->
     <link rel="stylesheet" href="{% static 'plugins/fontawesome-free/css/all.min.css' %}">
     <link rel="stylesheet" href="{% static 'dist/css/adminlte.min.css' %}">
- 
+    <link rel="stylesheet" href="{% static 'dist/output.css' %}">
 
-     
     <style>
     .small-box {
     min-height: 150px;
     display: flex;
     flex-direction: column;
     justify-content: center;
-   }
+    }
 
-
-   .profile-user-img {
+    .profile-user-img {
     border: 3px solid #adb5bd;
     padding: 3px;
     }
@@ -28,150 +26,360 @@
     border-radius: 10px;
     }
 
-   
-  .full-width-textarea {
-  width: 100%;
-  min-height: 120px;
-  resize: vertical;
-  }
-   
+    .full-width-textarea {
+    width: 100%;
+    min-height: 120px;
+    resize: vertical;
+    }
 
-  </style>
+    /* ── Sidebar: deep dark green theme (overrides AdminLTE default blue) ── */
+    .main-sidebar,
+    .main-sidebar.sidebar-dark-primary {
+        background-color: #0A2E22 !important;
+    }
 
-  </head>
+    .brand-link {
+        background-color: #072019 !important;
+        border-bottom: 1px solid rgba(255,255,255,.12) !important;
+    }
 
-  
+    .sidebar-dark-primary .user-panel, 
+    .main-sidebar .user-panel {
+        border-bottom: 1px solid rgba(255,255,255,.12) !important;
+    }
+
+    .main-sidebar .user-panel .info a {
+        color: #ffffff !important;
+    }
+
+    .nav-sidebar > .nav-item > .nav-link {
+        color: #CFE3DA !important;
+    }
+
+    .nav-sidebar > .nav-item > .nav-link i.nav-icon,
+    .nav-sidebar > .nav-item > .nav-link p {
+        color: inherit !important;
+    }
+
+    .nav-sidebar > .nav-item > .nav-link:hover {
+        background-color: #103B2B !important;
+        color: #ffffff !important;
+    }
+
+    .nav-sidebar > .nav-item > .nav-link.active {
+        background-color: #145C42 !important;
+        color: #ffffff !important;
+        box-shadow: none !important;
+    }
+
+    .nav-sidebar > .nav-item > .nav-link.active i.nav-icon,
+    .nav-sidebar > .nav-item > .nav-link.active p {
+        color: #ffffff !important;
+    }
+    </style>
+</head>
 
 <body class="hold-transition sidebar-mini layout-fixed">
-
 <div class="wrapper">
 
     <!-- Navbar -->
-   <nav class="main-header navbar navbar-expand navbar-white navbar-light">
+    <nav class="main-header navbar navbar-expand navbar-white navbar-light">
+        <!-- LEFT SIDE -->
+        <ul class="navbar-nav">
+            <li class="nav-item">
+                <a class="nav-link" data-widget="pushmenu">
+                    <i class="fas fa-bars"></i>
+                </a>
+            </li>
+        </ul>
 
-    <!-- LEFT SIDE -->
-    <ul class="navbar-nav">
-        <li class="nav-item">
-            <a class="nav-link" data-widget="pushmenu">
-                <i class="fas fa-bars"></i>
-            </a>
-        </li>
-    </ul>
+        <!-- RIGHT SIDE -->
+        <ul class="navbar-nav ml-auto">
+            <!-- Messages -->
+            <li class="nav-item">
+                <a href="{% url 'accounts:inbox' %}" class="nav-link">
+                    <i class="far fa-comments"></i>
+                </a>
+            </li>
 
-    <!-- RIGHT SIDE -->
-    <ul class="navbar-nav ml-auto">
+            <!-- Notifications -->
+            <style>
+            @import url('https://fonts.googleapis.com/css2?family=Sora:wght@600;700&family=DM+Sans:wght@400;500&display=swap');
+            .lp-notif-dropdown {
+              font-family: 'DM Sans', sans-serif;
+              width: 340px;
+              max-width: 90vw;
+              padding: 0;
+              border-radius: 12px;
+              box-shadow: 0 1px 3px rgba(0,0,0,.08), 0 0 0 1px rgba(0,0,0,.04);
+              border: 1px solid #E0DDD8;
+              overflow: hidden;
+            }
+            .lp-notif-dropdown-header {
+              font-family: 'Sora', sans-serif;
+              font-weight: 700;
+              font-size: 14px;
+              color: #191919;
+              padding: 12px 16px;
+              border-bottom: 1px solid #E0DDD8;
+              background: #fff;
+            }
+            .lp-notif-list { max-height: 340px; overflow-y: auto; }
+            .lp-notif-item {
+              display: flex;
+              gap: 10px;
+              padding: 12px 16px;
+              white-space: normal;
+              border-bottom: 1px solid #E0DDD8;
+              text-decoration: none !important;
+            }
+            .lp-notif-item:hover { background: #F3F2EE; }
+            .lp-notif-item.unread { background: #E7F3EC; }
+            .lp-notif-icon {
+              width: 32px; height: 32px; border-radius: 50%;
+              display: flex; align-items: center; justify-content: center;
+              flex-shrink: 0; font-size: 13px; color: #fff;
+            }
+            .lp-notif-body { min-width: 0; flex: 1; }
+            .lp-notif-title {
+              font-family: 'Sora', sans-serif;
+              font-weight: 600; font-size: 13px; color: #191919;
+              margin: 0 0 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            }
+            .lp-notif-msg {
+              font-size: 12px; color: #666666; margin: 0 0 3px;
+              white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            }
+            .lp-notif-time { font-size: 11px; color: #666666; }
+            .lp-notif-empty {
+              padding: 24px 16px; text-align: center; color: #666666;
+              font-size: 13px; font-style: italic;
+            }
+            .lp-notif-footer {
+              display: flex; align-items: center; justify-content: space-between;
+              padding: 10px 16px; background: #fff;
+            }
+            .lp-notif-footer a {
+              font-size: 12.5px; font-weight: 600; color: #0F6B3F; text-decoration: none;
+            }
+            .lp-notif-footer a:hover { color: #0A4A2C; text-decoration: underline; }
+            .lp-bell-badge {
+              position: absolute; top: 2px; right: 2px;
+              font-size: 9.5px; padding: 2px 4px; min-width: 15px;
+            }
+            </style>
+            <li class="nav-item dropdown">
+                <a href="#" class="nav-link" data-toggle="dropdown" aria-expanded="false" style="position: relative;">
+                    <i class="far fa-bell"></i>
+                    {% if unread_notifications_count > 0 %}
+                    <span class="badge badge-danger navbar-badge lp-bell-badge">{{ unread_notifications_count }}</span>
+                    {% endif %}
+                </a>
+                <div class="dropdown-menu dropdown-menu-lg dropdown-menu-right lp-notif-dropdown">
+                    <div class="lp-notif-dropdown-header">Notifications</div>
+                    <div class="lp-notif-list">
+                    {% for n in recent_notifications %}
+                        {% if n.notification_type == 'MENTORSHIP_REQUEST' %}
+                            {% with icon="fa-user-plus" icon_bg="#0F6B3F" %}
+                            <a href="{% if n.link_url %}{{ n.link_url }}{% else %}{% url 'accounts:notifications_list' %}{% endif %}" class="lp-notif-item{% if not n.is_read %} unread{% endif %}">
+                                <span class="lp-notif-icon" style="background: {{ icon_bg }};"><i class="fas {{ icon }}"></i></span>
+                                <span class="lp-notif-body">
+                                    <span class="lp-notif-title">{{ n.title }}</span>
+                                    <span class="lp-notif-msg">{{ n.message|truncatechars:60 }}</span>
+                                    <span class="lp-notif-time">{{ n.created_at|timesince }} ago</span>
+                                </span>
+                            </a>
+                            {% endwith %}
+                        {% elif n.notification_type == 'MENTORSHIP_ACCEPTED' %}
+                            {% with icon="fa-check-circle" icon_bg="#157347" %}
+                            <a href="{% if n.link_url %}{{ n.link_url }}{% else %}{% url 'accounts:notifications_list' %}{% endif %}" class="lp-notif-item{% if not n.is_read %} unread{% endif %}">
+                                <span class="lp-notif-icon" style="background: {{ icon_bg }};"><i class="fas {{ icon }}"></i></span>
+                                <span class="lp-notif-body">
+                                    <span class="lp-notif-title">{{ n.title }}</span>
+                                    <span class="lp-notif-msg">{{ n.message|truncatechars:60 }}</span>
+                                    <span class="lp-notif-time">{{ n.created_at|timesince }} ago</span>
+                                </span>
+                            </a>
+                            {% endwith %}
+                        {% elif n.notification_type == 'MENTORSHIP_REJECTED' %}
+                            {% with icon="fa-times-circle" icon_bg="#B3261E" %}
+                            <a href="{% if n.link_url %}{{ n.link_url }}{% else %}{% url 'accounts:notifications_list' %}{% endif %}" class="lp-notif-item{% if not n.is_read %} unread{% endif %}">
+                                <span class="lp-notif-icon" style="background: {{ icon_bg }};"><i class="fas {{ icon }}"></i></span>
+                                <span class="lp-notif-body">
+                                    <span class="lp-notif-title">{{ n.title }}</span>
+                                    <span class="lp-notif-msg">{{ n.message|truncatechars:60 }}</span>
+                                    <span class="lp-notif-time">{{ n.created_at|timesince }} ago</span>
+                                </span>
+                            </a>
+                            {% endwith %}
+                        {% elif n.notification_type == 'FACULTY_ANNOUNCEMENT' %}
+                            {% with icon="fa-bullhorn" icon_bg="#B7791F" %}
+                            <a href="{% if n.link_url %}{{ n.link_url }}{% else %}{% url 'accounts:notifications_list' %}{% endif %}" class="lp-notif-item{% if not n.is_read %} unread{% endif %}">
+                                <span class="lp-notif-icon" style="background: {{ icon_bg }};"><i class="fas {{ icon }}"></i></span>
+                                <span class="lp-notif-body">
+                                    <span class="lp-notif-title">{{ n.title }}</span>
+                                    <span class="lp-notif-msg">{{ n.message|truncatechars:60 }}</span>
+                                    <span class="lp-notif-time">{{ n.created_at|timesince }} ago</span>
+                                </span>
+                            </a>
+                            {% endwith %}
+                        {% elif n.notification_type == 'VERIFICATION_UPDATE' %}
+                            {% with icon="fa-shield-alt" icon_bg="#0F6B3F" %}
+                            <a href="{% if n.link_url %}{{ n.link_url }}{% else %}{% url 'accounts:notifications_list' %}{% endif %}" class="lp-notif-item{% if not n.is_read %} unread{% endif %}">
+                                <span class="lp-notif-icon" style="background: {{ icon_bg }};"><i class="fas {{ icon }}"></i></span>
+                                <span class="lp-notif-body">
+                                    <span class="lp-notif-title">{{ n.title }}</span>
+                                    <span class="lp-notif-msg">{{ n.message|truncatechars:60 }}</span>
+                                    <span class="lp-notif-time">{{ n.created_at|timesince }} ago</span>
+                                </span>
+                            </a>
+                            {% endwith %}
+                        {% else %}
+                            {% with icon="fa-info-circle" icon_bg="#666666" %}
+                            <a href="{% if n.link_url %}{{ n.link_url }}{% else %}{% url 'accounts:notifications_list' %}{% endif %}" class="lp-notif-item{% if not n.is_read %} unread{% endif %}">
+                                <span class="lp-notif-icon" style="background: {{ icon_bg }};"><i class="fas {{ icon }}"></i></span>
+                                <span class="lp-notif-body">
+                                    <span class="lp-notif-title">{{ n.title }}</span>
+                                    <span class="lp-notif-msg">{{ n.message|truncatechars:60 }}</span>
+                                    <span class="lp-notif-time">{{ n.created_at|timesince }} ago</span>
+                                </span>
+                            </a>
+                            {% endwith %}
+                        {% endif %}
+                    {% empty %}
+                        <div class="lp-notif-empty">No notifications yet</div>
+                    {% endfor %}
+                    </div>
+                    <div class="lp-notif-footer">
+                        <a href="{% url 'accounts:notifications_list' %}">View All</a>
+                        {% if request.user.role == 'FACULTY' %}
+                        <a href="{% url 'accounts:faculty_send_notification' %}"><i class="fas fa-plus"></i> Send Notification</a>
+                        {% endif %}
+                    </div>
+                </div>
+            </li>
 
-        <!-- Messages -->
-        <li class="nav-item">
-            <a href="{% url 'accounts:inbox' %}" class="nav-link">
-                <i class="far fa-comments"></i>
-            </a>
-        </li>
- 
-   
-
-
-
-        <!-- Notifications -->
-        <li class="nav-item">
-            <a href="#" class="nav-link">
-                <i class="far fa-bell"></i>
-            </a>
-        </li>
-
-        <li class="nav-item">
-    <a class="nav-link text-danger" href="{% url 'accounts:logout' %}">
-        Logout
-    </a>
-    </li>
-
-
-  </ul>
-
-</nav>
-
+            <li class="nav-item">
+                <a class="nav-link text-danger" href="{% url 'accounts:logout' %}">Logout</a>
+            </li>
+        </ul>
+    </nav>
 
     <!-- Sidebar -->
-<aside class="main-sidebar sidebar-dark-primary elevation-4">
+    <aside class="main-sidebar sidebar-dark-primary elevation-4">
+        <!-- Brand Logo -->
+        <a href="#" class="brand-link text-center">
+            <span class="brand-text font-weight-light">Alumora</span>
+        </a>
 
-    <!-- Brand Logo -->
-    <a href="#" class="brand-link text-center">
-        <span class="brand-text font-weight-light">Alumora</span>
-    </a>
-
-    <!-- Sidebar -->
-    <div class="sidebar">
-
-        <!-- User Panel -->
-        <div class="user-panel mt-3 pb-3 mb-3 d-flex">
-            <div class="image">
-                <img src="https://via.placeholder.com/40" class="img-circle elevation-2" alt="User">
+        <!-- Sidebar Panel -->
+        <div class="sidebar">
+            <!-- User Panel with Dynamic Profile Pic Fix -->
+            <div class="user-panel mt-3 pb-3 mb-3 d-flex align-items-center">
+                <div class="image">
+                    {% if user_profile_pic_url %}
+                        <img src="{{ user_profile_pic_url }}" class="img-circle elevation-2" alt="User" style="width: 34px; height: 34px; object-fit: cover;">
+                    {% else %}
+                        <div class="img-circle elevation-2 bg-secondary d-flex align-items-center justify-content-center" style="width: 34px; height: 34px; color: #fff;"><i class="fas {{ user_role_icon }}"></i></div>
+                    {% endif %}
+                </div>
+                <div class="info ml-2">
+                    <a href="{% url 'accounts:view_profile' %}" class="d-block">{{ request.user.username }}</a>
+                </div>
             </div>
-            <div class="info">
-            <a href="#" class="d-block">{{ request.user.username }}</a>
-            </div>
+
+            <!-- Menu -->
+            <nav class="mt-2">
+                <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview">
+                    <!-- Dashboard -->
+                    <li class="nav-item">
+                        {% if request.user.role == 'FACULTY' or request.user.role|upper == 'FACULTY' %}
+                            <a href="{% url 'accounts:faculty_dashboard' %}" class="nav-link active">
+                        {% elif request.user.role == 'ALUMNI' or request.user.role|upper == 'ALUMNI' %}
+                            <a href="{% url 'accounts:alumni_dashboard' %}" class="nav-link active">
+                        {% else %}
+                            <a href="{% url 'accounts:student_dashboard' %}" class="nav-link active">
+                        {% endif %}
+                            <i class="nav-icon fas fa-tachometer-alt"></i>
+                            <p>Dashboard</p>
+                        </a>
+                    </li>
+                    
+                    <!-- Profile -->
+                    <li class="nav-item">
+                        <a href="{% url 'accounts:view_profile' %}" class="nav-link">
+                            <i class="nav-icon fas fa-user"></i>
+                            <p>Profile</p>
+                        </a>
+                    </li>
+
+                    <!-- Messages -->
+                    <li class="nav-item">
+                        <a href="{% url 'accounts:inbox' %}" class="nav-link">
+                            <i class="nav-icon fas fa-envelope"></i>
+                            <p>Messages</p>
+                        </a>
+                    </li>
+
+                    <!-- Notifications -->
+                    <li class="nav-item">
+                        <a href="{% url 'accounts:notifications_list' %}" class="nav-link">
+                            <i class="nav-icon fas fa-bell"></i>
+                            <p>Notifications</p>
+                        </a>
+                    </li>
+
+                    <!-- Your Mentors (Only visible to non-faculty users) -->
+                    {% if request.user.role|upper != 'FACULTY' %}
+                    <li class="nav-item">
+                        <a href="#" class="nav-link">
+                            <i class="nav-icon fas fa-users"></i>
+                            <p>Your Mentors</p>
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
         </div>
+    </aside>
 
-        <!-- Menu -->
-        <nav class="mt-2">
-            <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview">
-
-                <!-- Dashboard -->
-                <li class="nav-item">
-                    <a href="{% url 'accounts:student_dashboard' %}" class="nav-link active">
-                        <i class="nav-icon fas fa-tachometer-alt"></i>
-                        <p>Dashboard</p>
-                    </a>
-                </li>
-
-                <!-- Profile -->
-                <li class="nav-item">
-                    <a href="{% url 'accounts:student_profile' %}" class="nav-link">
-                        <i class="nav-icon fas fa-user"></i>
-                        <p>Profile</p>
-                    </a>
-                </li>
-
-                <!-- Messages -->
-                <li class="nav-item">
-                    <a href="{% url 'accounts:inbox' %}" class="nav-link">
-                        <i class="nav-icon fas fa-envelope"></i>
-                        <p>Messages</p>
-                    </a>
-                </li>
-
-                <!-- Notifications -->
-                <li class="nav-item">
-                    <a href="#" class="nav-link">
-                        <i class="nav-icon fas fa-bell"></i>
-                        <p>Notifications</p>
-                    </a>
-                </li>
-
-                <!-- Your Mentors -->
-                <li class="nav-item">
-                    <a href="#" class="nav-link">
-                        <i class="nav-icon fas fa-users"></i>
-                        <p>Your Mentors</p>
-                    </a>
-                </li>
-
-            </ul>
-        </nav>
-
-    </div>
-</aside>
-
-
-<!-- Main Content -->
+    <!-- Main Content Wrapper -->
     <div class="content-wrapper">
         <section class="content pt-3">
             <div class="container-fluid">
+                {% if messages %}
+                <style>
+                  .lp-django-messages { max-width: 900px; margin: 0 auto 16px; font-family: 'DM Sans', sans-serif; }
+                  .lp-django-message {
+                    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+                    padding: 12px 18px; border-radius: 10px; font-size: 14px; margin-bottom: 8px;
+                    border: 1px solid transparent;
+                  }
+                  .lp-django-message.success { background: #E7F3EC; border-color: #0F6B3F; color: #0A4A2C; }
+                  .lp-django-message.error   { background: #FDECEA; border-color: #B3261E; color: #B3261E; }
+                  .lp-django-message.warning { background: #FFF6E5; border-color: #B7791F; color: #8a5a12; }
+                  .lp-django-message.info,
+                  .lp-django-message.debug   { background: #EEF2F5; border-color: #6b7d8c; color: #445; }
+                  .lp-django-message-close {
+                    background: none; border: none; cursor: pointer; font-size: 15px;
+                    color: inherit; opacity: .6; line-height: 1;
+                  }
+                  .lp-django-message-close:hover { opacity: 1; }
+                </style>
+                <div class="lp-django-messages">
+                    {% for message in messages %}
+                    <div class="lp-django-message {{ message.tags }}">
+                        <span>{{ message }}</span>
+                        <button type="button" class="lp-django-message-close" onclick="this.parentElement.remove();">&times;</button>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                
                 {% block content %}{% endblock %}
             </div>
         </section>
     </div>
-
 </div>
 
 <!-- JS FILES -->
