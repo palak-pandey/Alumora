@@ -1,98 +1,369 @@
-{% extends 'base.html' %}
+{% extends 'layouts/base.html' %}
 
 {% block content %}
+<style>
+  :root {
+    --fd-brand:       #0B3D2E;
+    --fd-brand-dark:  #062820;
+    --fd-brand-light: #E4F1EA;
+    --fd-surface:     #F3F6F4;
+    --fd-card:        #FFFFFF;
+    --fd-text:        #14231C;
+    --fd-muted:       #5B6B62;
+    --fd-border:      #DCE6E0;
+    --fd-radius:      12px;
+    --fd-shadow:      0 1px 3px rgba(0,0,0,.08), 0 0 0 1px rgba(0,0,0,.03);
+    --fd-danger:      #8C4A3F;
+    --fd-danger-bg:   #F6ECEA;
+    --fd-amber:       #B7791F;
+    --fd-amber-bg:    #FFF6E5;
+  }
 
-<h2>Welcome, {{ request.user.username }} (Faculty) 👩‍🏫</h2>
+  .fd-wrap { font-family: 'DM Sans', sans-serif; color: var(--fd-text); }
 
-<!-- ================= INFO CARD ================= -->
-<div class="card mb-3">
-    <div class="card-body">
-        This is your Faculty Dashboard 🚀  
-        <br>
-        <small class="text-muted">
-            You are responsible for initial verification of users.
-        </small>
+  .fd-header { margin-bottom: 22px; }
+  .fd-header h2 {
+    font-family: 'Sora', sans-serif; font-weight: 700; font-size: 24px; margin: 0 0 4px;
+  }
+  .fd-header p { color: var(--fd-muted); font-size: 14px; margin: 0; }
+
+  /* ── Stat cards ── */
+  .fd-stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+  .fd-stat {
+    background: var(--fd-card); border-radius: var(--fd-radius); box-shadow: var(--fd-shadow);
+    padding: 18px 20px;
+  }
+  .fd-stat .label { font-size: 12.5px; color: var(--fd-muted); margin: 0 0 6px; font-weight: 600; }
+  .fd-stat .num { font-family: 'Sora', sans-serif; font-size: 26px; font-weight: 700; margin: 0; line-height: 1.1; color: var(--fd-text); }
+  .fd-stat .num.accent { color: var(--fd-brand); }
+
+  @media (max-width: 900px) { .fd-stats { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 560px) { .fd-stats { grid-template-columns: 1fr; } }
+
+  /* ── Verification rate bar ── */
+  .fd-rate-card {
+    background: var(--fd-card); border-radius: var(--fd-radius); box-shadow: var(--fd-shadow);
+    padding: 16px 20px; margin-bottom: 24px;
+    display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap;
+  }
+  .fd-rate-card .rate-label { font-size: 13.5px; font-weight: 600; color: var(--fd-text); white-space: nowrap; }
+  .fd-rate-track {
+    flex: 1 1 220px; height: 8px; border-radius: 6px; background: var(--fd-border); overflow: hidden;
+  }
+  .fd-rate-fill { height: 100%; background: var(--fd-brand); border-radius: 6px; transition: width .3s ease; }
+  .fd-rate-pct { font-size: 13px; font-weight: 700; color: var(--fd-brand); white-space: nowrap; }
+
+  /* ── Two-column layout ── */
+  .fd-columns { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 20px; align-items: start; }
+  @media (max-width: 992px) { .fd-columns { grid-template-columns: 1fr; } }
+
+  .fd-section-title { font-family: 'Sora', sans-serif; font-weight: 700; font-size: 18px; margin: 0 0 14px; }
+
+  /* ── Filter tabs ── */
+  .fd-tabs { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+  .fd-tab {
+    background: var(--fd-card); border: 1.5px solid var(--fd-border); color: var(--fd-muted);
+    padding: 7px 16px; border-radius: 20px; font-size: 13px; font-weight: 600; cursor: pointer;
+    transition: all .15s ease;
+  }
+  .fd-tab:hover { border-color: var(--fd-brand); color: var(--fd-brand); }
+  .fd-tab.active { background: var(--fd-brand); border-color: var(--fd-brand); color: #fff; }
+
+  /* ── Request cards ── */
+  .fd-list { display: flex; flex-direction: column; gap: 10px; }
+  .fd-item {
+    background: var(--fd-card); border-radius: var(--fd-radius); box-shadow: var(--fd-shadow);
+    padding: 16px 18px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+  }
+  .fd-avatar {
+    width: 44px; height: 44px; border-radius: 50%; flex-shrink: 0;
+    background: var(--fd-brand-light); color: var(--fd-brand);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Sora', sans-serif; font-weight: 700; font-size: 15px;
+  }
+  .fd-item-main { flex: 1; min-width: 160px; }
+  .fd-item-name { font-weight: 600; font-size: 14.5px; margin: 0; }
+  .fd-item-sub { font-size: 12.5px; color: var(--fd-muted); margin: 2px 0 0; }
+
+  .fd-pill {
+    display: inline-block; padding: 4px 12px; border-radius: 20px;
+    font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .03em;
+    white-space: nowrap;
+  }
+  .fd-pill.pending  { background: var(--fd-amber-bg); color: var(--fd-amber); }
+  .fd-pill.info     { background: var(--fd-brand-light); color: var(--fd-brand); }
+  .fd-pill.verified { background: var(--fd-brand); color: #fff; }
+  .fd-pill.rejected { background: var(--fd-danger-bg); color: var(--fd-danger); }
+
+  .fd-progress { flex: 1 1 200px; min-width: 160px; }
+  .fd-progress-track { display: flex; height: 6px; border-radius: 4px; overflow: hidden; background: var(--fd-border); gap: 2px; }
+  .fd-progress-track span { flex: 1; border-radius: 2px; }
+  .fd-progress-track .done { background: var(--fd-brand); }
+  .fd-progress-track .undone { background: var(--fd-border); }
+  .fd-progress-labels { display: flex; justify-content: space-between; font-size: 10.5px; color: var(--fd-muted); margin-top: 4px; }
+
+  .fd-actions { display: flex; gap: 8px; flex-shrink: 0; }
+  .fd-btn {
+    border: none; border-radius: 20px; padding: 7px 16px; font-size: 12.5px; font-weight: 600;
+    cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 5px;
+  }
+  .fd-btn-outline { background: #fff; border: 1.5px solid var(--fd-border); color: var(--fd-text); }
+  .fd-btn-outline:hover { border-color: var(--fd-brand); color: var(--fd-brand); }
+  .fd-btn-primary { background: var(--fd-brand); color: #fff; }
+  .fd-btn-primary:hover { background: var(--fd-brand-dark); color: #fff; }
+
+  .fd-empty { text-align: center; padding: 48px 20px; color: var(--fd-muted); }
+  .fd-empty i { font-size: 28px; color: var(--fd-border); display: block; margin-bottom: 10px; }
+
+  /* ── Sidebar panels ── */
+  .fd-panel {
+    background: var(--fd-card); border-radius: var(--fd-radius); box-shadow: var(--fd-shadow);
+    padding: 18px 20px; margin-bottom: 20px;
+  }
+  .fd-panel-title { font-family: 'Sora', sans-serif; font-weight: 700; font-size: 15.5px; margin: 0 0 14px; }
+
+  .fd-verified-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--fd-border); }
+  .fd-verified-row:last-child { border-bottom: none; padding-bottom: 0; }
+  .fd-verified-row i { color: var(--fd-brand); font-size: 13px; flex-shrink: 0; }
+  .fd-verified-name { font-size: 13px; font-weight: 600; flex: 1; }
+  .fd-verified-time { font-size: 11.5px; color: var(--fd-muted); white-space: nowrap; }
+
+  .fd-notif-row { display: flex; align-items: flex-start; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--fd-border); }
+  .fd-notif-row:last-child { border-bottom: none; padding-bottom: 0; }
+  .fd-notif-row i { color: var(--fd-muted); font-size: 13px; margin-top: 2px; flex-shrink: 0; }
+  .fd-notif-text { font-size: 12.5px; line-height: 1.4; }
+  .fd-notif-text strong { font-weight: 600; }
+
+  .fd-panel-empty { font-size: 12.5px; color: var(--fd-muted); padding: 4px 0; }
+
+  /* ── Modals ── */
+  .modal-content { border-radius: var(--fd-radius); border: none; }
+  .modal-header { border-bottom: 1px solid var(--fd-border); }
+  .modal-title { font-family: 'Sora', sans-serif; font-weight: 700; color: var(--fd-text); font-size: 17px; }
+  .modal-footer { border-top: 1px solid var(--fd-border); }
+</style>
+
+<div class="fd-wrap">
+
+  <div class="fd-header">
+    <h2>Faculty Dashboard</h2>
+    <p>Review and verify alumni identity submissions for {{ request.user.institution.name|default:"your institution" }}.</p>
+  </div>
+
+  
+  {% if not just_requests %}
+  <!-- ── Stats ── -->
+  <div class="fd-stats">
+    <div class="fd-stat">
+      <p class="label">Total Students</p>
+      <p class="num">{{ stats.total_students }}</p>
     </div>
+    <div class="fd-stat">
+      <p class="label">Total Alumni</p>
+      <p class="num">{{ stats.total_alumni }}</p>
+    </div>
+    <div class="fd-stat">
+      <p class="label">Verified Alumni</p>
+      <p class="num accent">{{ stats.verified_alumni }}</p>
+    </div>
+    <div class="fd-stat">
+      <p class="label">Announcements Sent</p>
+      <p class="num">{{ stats.announcements_sent }}</p>
+    </div>
+  </div>
+
+  <!-- ── Verification rate ── -->
+  <div class="fd-rate-card">
+    <span class="rate-label">Verification rate</span>
+    <div class="fd-rate-track">
+      <div class="fd-rate-fill" style="width: {{ stats.verification_rate }}%;"></div>
+    </div>
+    <span class="fd-rate-pct">{{ stats.verification_rate }}% of alumni verified</span>
+  </div>
+  {% endif %}
+  
+  <div class="{% if just_requests %}w-100{% else %}fd-columns{% endif %}">
+
+    <!-- ── Left: verification requests ── -->
+    <div class="{% if just_requests %}w-100{% endif %}">
+      <h3 class="fd-section-title">Verification requests</h3>
+
+      <div class="fd-tabs">
+        <button type="button" class="fd-tab active" onclick="fdFilter('all', this)">All</button>
+        <button type="button" class="fd-tab" onclick="fdFilter('PENDING', this)">Pending</button>
+        <button type="button" class="fd-tab" onclick="fdFilter('FACULTY_APPROVED', this)">Faculty Approved</button>
+        <button type="button" class="fd-tab" onclick="fdFilter('VERIFIED', this)">Verified</button>
+        <button type="button" class="fd-tab" onclick="fdFilter('REJECTED', this)">Rejected</button>
+      </div>
+
+      <div class="fd-list" id="fdList">
+        {% for v in verification_requests %}
+        <div class="fd-item" data-status="{{ v.status }}">
+
+          <div class="fd-avatar">{{ v.first_name|slice:":1" }}{{ v.last_name|slice:":1" }}</div>
+
+          <div class="fd-item-main">
+            <p class="fd-item-name">{{ v.first_name }} {{ v.last_name }}</p>
+            <p class="fd-item-sub">@{{ v.user.username }} · {{ v.degree_course }}</p>
+          </div>
+
+          <div class="fd-progress">
+            <div class="fd-progress-track">
+              <span class="{% if v.status != 'PENDING' %}done{% else %}undone{% endif %}"></span>
+              <span class="{% if v.status == 'ADMIN_APPROVED' or v.status == 'VERIFIED' %}done{% else %}undone{% endif %}"></span>
+              <span class="{% if v.status == 'VERIFIED' %}done{% else %}undone{% endif %}"></span>
+            </div>
+            <div class="fd-progress-labels"><span>Faculty</span><span>Admin</span><span>Verified</span></div>
+          </div>
+
+          {% if v.status == "PENDING" %}
+            <span class="fd-pill pending">Pending</span>
+          {% elif v.status == "FACULTY_APPROVED" %}
+            <span class="fd-pill info">Faculty Approved</span>
+          {% elif v.status == "ADMIN_APPROVED" %}
+            <span class="fd-pill info">Admin Approved</span>
+          {% elif v.status == "VERIFIED" %}
+            <span class="fd-pill verified">Verified ✓</span>
+          {% elif v.status == "REJECTED" %}
+            <span class="fd-pill rejected">Rejected</span>
+          {% endif %}
+
+          <div class="fd-actions">
+            <button type="button" class="fd-btn fd-btn-outline" data-toggle="modal" data-target="#reviewModal-{{ v.id }}">
+              <i class="fas fa-search"></i> Review
+            </button>
+            {% if v.status == "PENDING" %}
+              <a href="{% url 'accounts:faculty_approve' v.id %}" class="fd-btn fd-btn-primary">
+                <i class="fas fa-check"></i> Approve
+              </a>
+            {% endif %}
+          </div>
+        </div>
+        {% empty %}
+        <div class="fd-empty">
+          <i class="far fa-folder-open"></i>
+          <p>No verification requests yet. New submissions from alumni will show up here.</p>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- ── Right: sidebar panels ── -->
+    {% if not just_requests %}
+    <div>
+      <div class="fd-panel">
+        <p class="fd-panel-title">Recently verified</p>
+        {% for v in recently_verified %}
+          <div class="fd-verified-row">
+            <i class="fas fa-check-circle"></i>
+            <span class="fd-verified-name">{{ v.first_name }} {{ v.last_name }}</span>
+            <span class="fd-verified-time">{{ v.updated_at|timesince }} ago</span>
+          </div>
+        {% empty %}
+          <p class="fd-panel-empty">No alumni verified yet.</p>
+        {% endfor %}
+      </div>
+
+      <div class="fd-panel">
+        <p class="fd-panel-title">Recent notifications</p>
+        {% for n in recent_notifications %}
+          <div class="fd-notif-row">
+            <i class="far fa-bell"></i>
+            <span class="fd-notif-text"><strong>{{ n.title }}</strong><br>{{ n.message }}</span>
+          </div>
+        {% empty %}
+          <p class="fd-panel-empty">No notifications yet.</p>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
 </div>
 
-<!-- ================= VERIFICATION SECTION ================= -->
-<h4>🔍 Verification Requests</h4>
-
-<table class="table table-bordered">
-<tr>
-  <th>User</th>
-  <th>Progress</th>
-  <th>Status</th>
-  <th>Action</th>
-</tr>
-
+<!-- ================= REVIEW + FULL-SIZE IMAGE MODALS ================= -->
 {% for v in verification_requests %}
-<tr>
-  <td>{{ v.user.username }}</td>
 
-  <!-- PROGRESS BAR -->
-  <td style="width:40%;">
-    <div class="progress" style="height:25px;">
-
-      <!-- Faculty -->
-      <div class="progress-bar 
-      {% if v.status != 'PENDING' %}bg-info{% else %}bg-secondary{% endif %}" 
-      style="width:33%; text-align:center;">
-        Faculty {% if v.status != 'PENDING' %}✔{% endif %}
+<div class="modal fade" id="reviewModal-{{ v.id }}" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Verification Request — {{ v.first_name }} {{ v.last_name }}</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
       </div>
 
-      <!-- Admin -->
-      <div class="progress-bar 
-      {% if v.status == 'ADMIN_APPROVED' or v.status == 'VERIFIED' %}bg-primary{% else %}bg-secondary{% endif %}" 
-      style="width:33%; text-align:center;">
-        Admin {% if v.status == 'ADMIN_APPROVED' or v.status == 'VERIFIED' %}✔{% endif %}
+      <div class="modal-body">
+        <div class="row">
+          <div class="col-md-6">
+            <p><strong>First Name:</strong> {{ v.first_name }}</p>
+            <p><strong>Last Name:</strong> {{ v.last_name }}</p>
+            <p><strong>Father's Name:</strong> {{ v.father_name }}</p>
+            <p><strong>Degree / Course:</strong> {{ v.degree_course }}</p>
+            <p><strong>ABC / APAAR ID:</strong> {{ v.abc_apaar_id }}</p>
+            <p><strong>Submitted:</strong> {{ v.created_at|date:"d M Y, h:i A" }}</p>
+          </div>
+          <div class="col-md-6 text-center">
+            <strong class="d-block mb-2">Degree Certificate</strong>
+            {% if v.degree_certificate %}
+              <img src="{{ v.degree_certificate.url }}" alt="Degree Certificate"
+                   style="max-width:100%; max-height:280px; border:1px solid var(--fd-border); border-radius:8px; object-fit:contain; cursor:pointer;"
+                   data-toggle="modal" data-target="#imageModal-{{ v.id }}" data-dismiss="modal">
+              <small class="d-block mt-1" style="color:var(--fd-muted);">Click image to view full size</small>
+            {% else %}
+              <p style="color:var(--fd-muted);">No certificate uploaded.</p>
+            {% endif %}
+          </div>
+        </div>
       </div>
 
-      <!-- Verified -->
-      <div class="progress-bar 
-      {% if v.status == 'VERIFIED' %}bg-success{% else %}bg-secondary{% endif %}" 
-      style="width:34%; text-align:center;">
-        Verified {% if v.status == 'VERIFIED' %}✅{% endif %}
+      <div class="modal-footer">
+        {% if v.status == "PENDING" %}
+          <form method="POST" action="{% url 'accounts:faculty_reject' v.id %}" class="form-inline">
+            {% csrf_token %}
+            <input type="text" name="reason" class="form-control form-control-sm mr-2" placeholder="Reason for rejection" required style="min-width:220px;">
+            <button type="submit" class="fd-btn" style="background: var(--fd-danger-bg); color: var(--fd-danger);">✖ Reject</button>
+          </form>
+          <a href="{% url 'accounts:faculty_approve' v.id %}" class="fd-btn fd-btn-primary">✔ Approve</a>
+        {% else %}
+          <span class="mr-auto" style="color:var(--fd-muted);">Already processed — {{ v.get_status_display }}</span>
+        {% endif %}
+        <button type="button" class="fd-btn fd-btn-outline" data-dismiss="modal">Close</button>
       </div>
-
     </div>
+  </div>
+</div>
 
-    {% if v.status == 'REJECTED' %}
-      <span class="badge bg-danger mt-1">Rejected ❌ (Admin review pending)</span>
-    {% endif %}
-  </td>
+<div class="modal fade" id="imageModal-{{ v.id }}" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-xl" role="document">
+    <div class="modal-content" style="background:#1c1c1c;">
+      <div class="modal-body text-center p-0">
+        {% if v.degree_certificate %}
+          <img src="{{ v.degree_certificate.url }}" alt="Degree Certificate — Full Size" style="max-width:100%; max-height:85vh; object-fit:contain;">
+        {% endif %}
+      </div>
+      <div class="modal-footer" style="background:#262626; border-top:1px solid #3a3a3a;">
+        <button type="button" class="btn btn-light btn-sm" data-dismiss="modal" data-toggle="modal" data-target="#reviewModal-{{ v.id }}">
+          ← Back to Review
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
 
-  <!-- STATUS -->
-  <td>
-    {% if v.status == "PENDING" %}
-      <span class="badge bg-secondary">Pending</span>
-    {% elif v.status == "FACULTY_APPROVED" %}
-      <span class="badge bg-info">Approved by Faculty</span>
-    {% elif v.status == "ADMIN_APPROVED" %}
-      <span class="badge bg-primary">Admin Approved</span>
-    {% elif v.status == "VERIFIED" %}
-      <span class="badge bg-success">Verified ✅</span>
-    {% elif v.status == "REJECTED" %}
-      <span class="badge bg-danger">Rejected (Needs Admin Review)</span>
-    {% endif %}
-  </td>
-
-  <!-- ACTIONS -->
-  <td>
-    {% if v.status == "PENDING" %}
-      <a href="{% url 'accounts:faculty_approve' v.id %}" class="btn btn-success btn-sm">✔ Approve</a>
-      <a href="{% url 'accounts:faculty_reject' v.id %}" class="btn btn-danger btn-sm">✖ Reject</a>
-    {% else %}
-      <span class="text-muted">No action</span>
-    {% endif %}
-  </td>
-
-</tr>
-{% empty %}
-<tr>
-  <td colspan="4">No verification requests</td>
-</tr>
 {% endfor %}
-</table>
 
+<script>
+  function fdFilter(status, btn) {
+    document.querySelectorAll('.fd-tab').forEach(t => t.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('#fdList .fd-item').forEach(item => {
+      item.style.display = (status === 'all' || item.dataset.status === status) ? 'flex' : 'none';
+    });
+  }
+</script>
 {% endblock %}

@@ -1,146 +1,399 @@
-{% extends "base.html" %}
+{% extends "layouts/base.html" %}
 {% block content %}
 
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=DM+Sans:wght@400;500&display=swap">
+
 <style>
-.chat-box {
-  height: 65vh;
-  overflow-y: auto;
-  padding: 15px;
-  background: #e5ddd5;
-}
+  :root {
+    --brand:       #0F6B3F;
+    --brand-light: #E7F3EC;
+    --brand-dark:  #0A4A2C;
+    --surface:     #F3F2EE;
+    --card-bg:     #FFFFFF;
+    --text-primary:#191919;
+    --text-muted:  #666666;
+    --border:      #E0DDD8;
+    --radius:      12px;
+    --shadow:      0 1px 3px rgba(0,0,0,.08), 0 0 0 1px rgba(0,0,0,.04);
+  }
 
-.message {
-  max-width: 60%;
-  padding: 10px 14px;
-  border-radius: 15px;
-  margin-bottom: 10px;
-}
+  .lp-msg-wrapper {
+    font-family: 'DM Sans', sans-serif;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
 
-.sent {
-  background: #dcf8c6;
-  margin-left: auto;
-}
+  .lp-msg-shell {
+    display: flex;
+    background: var(--card-bg);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    height: 78vh;
+    overflow: hidden;
+  }
 
-.received {
-  background: #fff;
-}
+  /* ── Sidebar list (reused visual language from inbox.html) ── */
+  .lp-list-col {
+    display: none;
+    flex-direction: column;
+    border-right: 1px solid var(--border);
+    width: 320px;
+    flex-shrink: 0;
+  }
+  @media (min-width: 768px) {
+    .lp-list-col { display: flex; }
+  }
 
-.timestamp {
-  font-size: 10px;
-  display: block;
-  text-align: right;
-}
+  .lp-list-header {
+    padding: 18px 20px 14px;
+    border-bottom: 1px solid var(--border);
+  }
+  .lp-list-title {
+    font-family: 'Sora', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+  }
+
+  .lp-chat-list { flex: 1; overflow-y: auto; }
+
+  .lp-chat-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 20px;
+    text-decoration: none;
+    border-bottom: 1px solid var(--border);
+    transition: background .15s;
+  }
+  .lp-chat-item:hover { background: var(--surface); text-decoration: none; }
+  .lp-chat-item.active { background: var(--brand-light); }
+
+  .lp-chat-avatar {
+    width: 42px; height: 42px;
+    border-radius: 50%;
+    object-fit: cover;
+    background: #ddd;
+    flex-shrink: 0;
+  }
+  .lp-chat-name {
+    font-family: 'Sora', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* ── Thread column ───────────────────────────────────── */
+  .lp-thread-col {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  .lp-thread-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 22px;
+    border-bottom: 1px solid var(--border);
+  }
+  .lp-thread-name {
+    font-family: 'Sora', sans-serif;
+    font-size: 15.5px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+  }
+  .lp-thread-role {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin: 0;
+  }
+
+  .lp-chat-box {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+    background: var(--surface);
+    display: flex;
+    flex-direction: column;
+  }
+
+  .lp-msg-row { display: flex; margin-bottom: 12px; }
+  .lp-msg-row.sent { justify-content: flex-end; }
+  .lp-msg-row.received { justify-content: flex-start; }
+
+  .lp-bubble {
+    max-width: 65%;
+    padding: 10px 15px;
+    border-radius: 16px;
+    font-size: 14px;
+    line-height: 1.45;
+    box-shadow: var(--shadow);
+  }
+  .lp-bubble.sent {
+    background: var(--brand);
+    color: #fff;
+    border-bottom-right-radius: 4px;
+  }
+  .lp-bubble.received {
+    background: #fff;
+    color: var(--text-primary);
+    border-bottom-left-radius: 4px;
+  }
+  .lp-bubble .lp-sender {
+    display: block;
+    font-family: 'Sora', sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--brand);
+    margin-bottom: 2px;
+  }
+  .lp-bubble .lp-timestamp {
+    display: block;
+    font-size: 10.5px;
+    text-align: right;
+    margin-top: 4px;
+    opacity: .7;
+  }
+
+  /* ── Pending banner ──────────────────────────────────── */
+  .lp-pending-banner {
+    margin: 14px 20px 0;
+    padding: 14px 18px;
+    background: var(--brand-light);
+    border: 1.5px solid var(--brand);
+    border-radius: var(--radius);
+    text-align: center;
+  }
+  .lp-pending-title {
+    font-family: 'Sora', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--brand-dark);
+    margin: 0 0 4px;
+  }
+  .lp-pending-sub {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin: 0 0 10px;
+  }
+
+  .lp-btn-primary {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--brand); color: #fff;
+    padding: 9px 22px; border-radius: 20px;
+    font-size: 14px; font-weight: 600; border: none; cursor: pointer;
+    text-decoration: none; transition: background .2s, transform .1s;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .lp-btn-primary:hover { background: var(--brand-dark); color: #fff; transform: translateY(-1px); }
+
+  /* ── Input bar ────────────────────────────────────────── */
+  .lp-input-bar {
+    display: flex;
+    gap: 10px;
+    padding: 14px 20px;
+    border-top: 1px solid var(--border);
+    background: #fff;
+  }
+  .lp-msg-input {
+    flex: 1;
+    border: 1.5px solid var(--border);
+    border-radius: 20px;
+    padding: 10px 16px;
+    font-size: 14px;
+    font-family: 'DM Sans', sans-serif;
+    color: var(--text-primary);
+    outline: none;
+    transition: border-color .2s;
+  }
+  .lp-msg-input:focus { border-color: var(--brand); }
+
+  /* ── Empty states ────────────────────────────────────── */
+  .lp-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    padding: 40px 20px;
+    text-align: center;
+    color: var(--text-muted);
+  }
+  .lp-empty-icon {
+    width: 64px; height: 64px;
+    border-radius: 50%;
+    background: var(--brand-light);
+    color: var(--brand);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 24px;
+    margin-bottom: 14px;
+  }
+  .lp-empty-title {
+    font-family: 'Sora', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0 0 4px;
+  }
+  .lp-empty-sub { font-size: 13px; color: var(--text-muted); margin: 0; }
 </style>
 
-<div class="container-fluid mt-3">
-  <div class="row">
+<div class="lp-msg-wrapper">
+  <div class="lp-msg-shell">
 
-    <!-- LEFT CHAT LIST -->
-    <div class="col-md-4">
-      <div class="card" style="height:80vh; overflow-y:auto;">
-        <div class="card-header bg-success text-white">
-          Chats
-        </div>
-
-        <div class="list-group list-group-flush">
-          {% for convo in conversations %}
-          <a href="{% url 'accounts:chat_view' convo_id=convo.id %}" class="list-group-item">
-            <b>
-              {% for user in convo.participants.all %}
-                {% if user != request.user %}
-                  {{ user.username }}
-                {% endif %}
-              {% endfor %}
-            </b>
+    <!-- SIDEBAR: conversation list -->
+    <div class="lp-list-col">
+      <div class="lp-list-header">
+        <p class="lp-list-title">Messaging</p>
+      </div>
+      <div class="lp-chat-list">
+        {% for convo in conversations %}
+          <a href="{% url 'accounts:chat_view' convo_id=convo.id %}"
+             class="lp-chat-item{% if convo.id == conversation.id %} active{% endif %}">
+            {% for user in convo.participants.all %}
+              {% if user != request.user %}
+                <img class="lp-chat-avatar"
+                     src="https://ui-avatars.com/api/?name={{ user.get_full_name|urlencode|default:user.username }}&background=0F6B3F&color=ffffff&size=84"
+                     alt="{{ user.get_full_name|default:user.username }}">
+                <span class="lp-chat-name">{{ user.get_full_name|default:user.username }}</span>
+              {% endif %}
+            {% endfor %}
           </a>
-          {% endfor %}
-        </div>
+        {% empty %}
+          <div class="lp-empty-state">
+            <div class="lp-empty-icon"><i class="far fa-comments"></i></div>
+            <p class="lp-empty-title">No chats yet</p>
+          </div>
+        {% endfor %}
       </div>
     </div>
 
-    <!-- RIGHT CHAT -->
-    <div class="col-md-8">
-      <div class="card">
+    <!-- THREAD -->
+    <div class="lp-thread-col">
 
-        <div class="card-header bg-primary text-white">
-          Chat
+      {% if conversation %}
+        <div class="lp-thread-header">
+          {% for user in conversation.participants.all %}
+            {% if user != request.user %}
+              <img class="lp-chat-avatar"
+                   src="https://ui-avatars.com/api/?name={{ user.get_full_name|urlencode|default:user.username }}&background=0F6B3F&color=ffffff&size=84"
+                   alt="{{ user.get_full_name|default:user.username }}">
+              <div>
+                <p class="lp-thread-name">{{ user.get_full_name|default:user.username }}</p>
+                <p class="lp-thread-role">{{ user.role|title }}</p>
+              </div>
+            {% endif %}
+          {% endfor %}
         </div>
 
-        <!-- Messages -->
-        <div class="card-body chat-box" id="chat-box">
+        <div class="lp-chat-box" id="chat-box">
+          {% if is_pending %}
+            <div class="lp-empty-state">
+              <div class="lp-empty-icon"><i class="far fa-clock"></i></div>
+              <p class="lp-empty-title">No messages yet</p>
+              <p class="lp-empty-sub">This conversation is waiting on a message request.</p>
+            </div>
+          {% else %}
+            {% for msg in chat_messages %}
+              {% if msg.sender == request.user %}
+                <div class="lp-msg-row sent">
+                  <div class="lp-bubble sent">
+                    {{ msg.content }}
+                    <span class="lp-timestamp">{{ msg.created_at|date:"H:i" }}</span>
+                  </div>
+                </div>
+              {% else %}
+                <div class="lp-msg-row received">
+                  <div class="lp-bubble received">
+                    <span class="lp-sender">{{ msg.sender.get_full_name|default:msg.sender.username }}</span>
+                    {{ msg.content }}
+                    <span class="lp-timestamp">{{ msg.created_at|date:"H:i" }}</span>
+                  </div>
+                </div>
+              {% endif %}
+            {% empty %}
+              <div class="lp-empty-state">
+                <div class="lp-empty-icon"><i class="far fa-comment-dots"></i></div>
+                <p class="lp-empty-title">No messages yet</p>
+                <p class="lp-empty-sub">Say hello to start the conversation.</p>
+              </div>
+            {% endfor %}
+          {% endif %}
+        </div>
 
-  {% if is_pending %}
-    <p class="text-center text-muted">No messages yet (Request pending)</p>
-  
-  {% else %}
-
-    {% for msg in messages %}
-      {% if msg.sender == request.user %}
-        <div class="d-flex justify-content-end">
-          <div class="message sent">
-            {{ msg.content }}
-            <span class="timestamp">{{ msg.created_at|date:"H:i" }}</span>
+        {% if is_pending %}
+          <div class="lp-pending-banner">
+            <p class="lp-pending-title">Message request pending</p>
+            {% if request.user.role == 'ALUMNI' %}
+              <p class="lp-pending-sub">Accept this request to start messaging.</p>
+              <a href="{% url 'accounts:accept_message_request' convo_id=conversation.id %}" class="lp-btn-primary">
+                <i class="fas fa-check"></i> Accept Request
+              </a>
+            {% else %}
+              <p class="lp-pending-sub" style="margin:0;">Waiting for the alumni to accept your request.</p>
+            {% endif %}
           </div>
+        {% endif %}
+
+        <div class="lp-input-bar">
+          {% if not is_pending %}
+            <form method="POST" action="{% url 'accounts:send_message' convo_id=conversation.id %}" style="display:flex; gap:10px; width:100%;">
+              {% csrf_token %}
+              <input type="text" name="content" class="lp-msg-input" placeholder="Write a message..." required>
+              <button class="lp-btn-primary" type="submit">
+                <i class="fas fa-paper-plane"></i> Send
+              </button>
+            </form>
+          {% else %}
+            <p class="lp-empty-sub" style="margin:0; width:100%; text-align:center;">You can message once the request is accepted.</p>
+          {% endif %}
         </div>
+
       {% else %}
-        <div class="d-flex justify-content-start">
-          <div class="message received">
-            <b>{{ msg.sender.username }}</b><br>
-            {{ msg.content }}
-            <span class="timestamp">{{ msg.created_at|date:"H:i" }}</span>
-          </div>
+        <div class="lp-empty-state">
+          <div class="lp-empty-icon"><i class="far fa-comment-dots"></i></div>
+          <p class="lp-empty-title">Select a chat</p>
+          <p class="lp-empty-sub">Choose a conversation from the list to start messaging.</p>
         </div>
       {% endif %}
-    {% empty %}
-      <p class="text-center text-muted">No messages yet</p>
-    {% endfor %}
 
-  {% endif %}
-
-</div>       
-        {% if is_pending %}
-  <div class="alert alert-warning text-center m-2">
-    Message request pending
-
-    <br>
-
-    <a href="{% url 'accounts:accept_message_request' convo_id=conversation.id %}" 
-       class="btn btn-success btn-sm mt-2">
-       Accept Request
-    </a>
+    </div>
   </div>
-{% endif %}
-
-
-
-      <!-- Input -->
-      <div class="card-footer">
-
-  {% if not is_pending %}
-    <form method="POST" action="{% url 'accounts:send_message' convo_id=conversation.id %}">
-      {% csrf_token %}
-      <div class="input-group">
-        <input type="text" name="content" class="form-control" placeholder="Type message..." required>
-        <button class="btn btn-success">Send</button>
-      </div>
-    </form>
-  {% else %}
-    <p class="text-center text-muted">You can message after request is accepted</p>
-  {% endif %}
-
 </div>
 
-<!-- AUTO REFRESH -->
+<!-- AUTO REFRESH: poll for new content, only swap in changes -->
 <script>
-setInterval(function() {
+(function () {
+  const chatBox = document.getElementById("chat-box");
+  if (!chatBox) return;
+
+  setInterval(function () {
     fetch(window.location.href)
-    .then(res => res.text())
-    .then(data => {
-        let doc = new DOMParser().parseFromString(data, "text/html");
-        document.getElementById("chat-box").innerHTML =
-            doc.getElementById("chat-box").innerHTML;
-    });
-}, 3000);
+      .then(res => res.text())
+      .then(data => {
+        const doc = new DOMParser().parseFromString(data, "text/html");
+        const freshBox = doc.getElementById("chat-box");
+        if (!freshBox) return;
+
+        if (freshBox.innerHTML !== chatBox.innerHTML) {
+          const wasAtBottom = chatBox.scrollHeight - chatBox.scrollTop - chatBox.clientHeight < 40;
+          chatBox.innerHTML = freshBox.innerHTML;
+          if (wasAtBottom) {
+            chatBox.scrollTop = chatBox.scrollHeight;
+          }
+        }
+      });
+  }, 3000);
+
+  chatBox.scrollTop = chatBox.scrollHeight;
+})();
 </script>
 
 {% endblock %}

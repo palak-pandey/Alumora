@@ -1,136 +1,819 @@
-{% extends "base.html" %}
+{% extends "layouts/base.html" %}
+{% load static %}
+
+{% block title %}{{ student.user.get_full_name|default:student.user.username }} — Profile{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=DM+Sans:wght@400;500&display=swap">
+
+{% endblock %}
+
 {% block content %}
+<style>
+  :root {
+    --brand:       #0B3D2E;
+    --brand-light: #E4F1EA;
+    --brand-dark:  #062820;
+    --surface:     #F3F2EE;
+    --card-bg:     #FFFFFF;
+    --text-primary:#191919;
+    --text-muted:  #666666;
+    --border:      #E0DDD8;
+    --radius:      12px;
+    --shadow:      0 1px 3px rgba(0,0,0,.08), 0 0 0 1px rgba(0,0,0,.04);
+  }
 
-<div class="content-wrapper">
-<section class="content">
-<div class="container-fluid">
+  body { background: var(--surface) !important; font-family: 'DM Sans', sans-serif; }
 
-<form method="POST" enctype="multipart/form-data">
-{% csrf_token %}
+  /* ── Layout ─────────────────────────────────────────── */
+  .lp-wrapper {
+    max-width: 900px;
+    margin: 24px auto;
+    padding: 0 16px 48px;
+  }
 
-<!-- COVER + PROFILE -->
+  /* ── Cards ──────────────────────────────────────────── */
+  .lp-card {
+    background: var(--card-bg);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    margin-bottom: 12px;
+    overflow: hidden;
+  }
 
-<div class="card">
+  /* ── Hero / Cover ────────────────────────────────────── */
+  .lp-cover {
+    position: relative;
+    height: 200px;
+    background: linear-gradient(135deg, #0B3D2E 0%, #062820 60%, #041712 100%);
+    overflow: hidden;
+  }
+  .lp-cover img.cover-img {
+    width: 100%; height: 100%; object-fit: cover; display: block;
+  }
+  .lp-cover .cover-pattern {
+    position: absolute; inset: 0;
+    background-image:
+      radial-gradient(circle at 20% 50%, rgba(255,255,255,.07) 0%, transparent 50%),
+      radial-gradient(circle at 80% 20%, rgba(255,255,255,.05) 0%, transparent 40%);
+  }
+  .lp-cover-edit {
+    position: absolute; bottom: 12px; right: 12px;
+  }
+  .lp-cover-edit label {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: rgba(0,0,0,.55); color: #fff;
+    padding: 6px 14px; border-radius: 20px;
+    font-size: 13px; font-weight: 500; cursor: pointer;
+    backdrop-filter: blur(4px); transition: background .2s;
+  }
+  .lp-cover-edit label:hover { background: rgba(0,0,0,.75); }
+  .lp-cover-edit input[type="file"] { display: none; }
 
-  <!-- Cover -->
+  /* ── Avatar ──────────────────────────────────────────── */
+  .lp-avatar-wrap {
+    position: relative;
+    width: 128px; height: 128px;
+    margin-top: -64px; margin-left: 24px;
+    flex-shrink: 0;
+  }
+  .lp-avatar {
+    width: 128px; height: 128px;
+    border-radius: 50%;
+    border: 4px solid #fff;
+    object-fit: cover;
+    background: #ddd;
+    box-shadow: 0 2px 8px rgba(0,0,0,.18);
+  }
+  .lp-avatar-edit {
+    position: absolute; bottom: 4px; right: 4px;
+  }
+  .lp-avatar-edit label {
+    display: flex; align-items: center; justify-content: center;
+    width: 30px; height: 30px;
+    background: var(--brand); color: #fff;
+    border-radius: 50%; cursor: pointer;
+    font-size: 14px; box-shadow: 0 1px 4px rgba(0,0,0,.25);
+    transition: background .2s;
+  }
+  .lp-avatar-edit label:hover { background: var(--brand-dark); }
+  .lp-avatar-edit input[type="file"] { display: none; }
 
-  <div style="position: relative;">
-    {% if student.cover_photo %}
-      <img src="{{ student.cover_photo.url }}" 
-           style="width:100%; height:220px; object-fit:cover;">
+  /* ── Hero Body ───────────────────────────────────────── */
+  .lp-hero-body {
+    padding: 12px 24px 24px;
+  }
+  .lp-hero-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .lp-name {
+    font-family: 'Sora', sans-serif;
+    font-size: 24px; font-weight: 700;
+    color: var(--text-primary); margin: 0 0 2px;
+  }
+  .lp-username {
+    font-size: 14px; color: var(--text-muted); margin: 0 0 6px;
+  }
+  .lp-headline {
+    .lp-headline {
+    font-size: 15px;
+    color: var(--text-primary);
+    margin: 0 0 6px;
+    line-height: 1.5;
+    white-space: pre-line;
+}
+  }
+  .lp-meta {
+    display: flex; flex-wrap: wrap; gap: 12px;
+    font-size: 13px; color: var(--text-muted); margin-top: 4px;
+  }
+  .lp-meta span { display: flex; align-items: center; gap: 5px; }
+
+  /* ── Section ─────────────────────────────────────────── */
+  .lp-section { padding: 20px 24px; }
+  .lp-section + .lp-section { border-top: 1px solid var(--border); }
+  .lp-section-title {
+    font-family: 'Sora', sans-serif;
+    font-size: 16px; font-weight: 600;
+    color: var(--text-primary); margin: 0 0 14px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+
+  /* ── About ───────────────────────────────────────────── */
+  .lp-about-text {
+    font-size: 15px; color: var(--text-primary);
+    line-height: 1.65; white-space: pre-wrap;
+  }
+  .lp-about-muted { color: var(--text-muted); font-style: italic; }
+
+  /* ── Education item ──────────────────────────────────── */
+  .lp-edu-item {
+    display: flex; gap: 14px; align-items: flex-start;
+  }
+  .lp-edu-icon {
+    width: 48px; height: 48px; border-radius: 8px;
+    background: var(--brand-light);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .lp-edu-icon i { font-size: 22px; color: var(--brand); }
+  .lp-edu-name {
+    font-family: 'Sora', sans-serif;
+    font-size: 15px; font-weight: 600; color: var(--text-primary); margin: 0;
+  }
+  .lp-edu-dept { font-size: 14px; color: var(--text-primary); margin: 2px 0; }
+  .lp-edu-year { font-size: 13px; color: var(--text-muted); }
+
+  /* ── Skills ──────────────────────────────────────────── */
+  .lp-skills-grid {
+    display: flex; flex-wrap: wrap; gap: 8px;
+  }
+  .lp-skill-pill {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 5px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: 20px;
+    font-size: 13px; font-weight: 500; color: var(--text-primary);
+    background: #fff; transition: border-color .15s, color .15s;
+  }
+  .lp-skill-pill:hover { border-color: var(--brand); color: var(--brand); }
+
+  /* ── Edit mode inputs ────────────────────────────────── */
+  .lp-input, .lp-textarea {
+    width: 100%;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 14px;
+    font-family: 'DM Sans', sans-serif;
+    color: var(--text-primary);
+    background: #fff;
+    transition: border-color .2s, box-shadow .2s;
+    outline: none;
+    box-sizing: border-box;
+  }
+  .lp-input:focus, .lp-textarea:focus {
+    border-color: var(--brand);
+    box-shadow: 0 0 0 3px rgba(10,102,194,.12);
+  }
+  .lp-textarea { resize: vertical; min-height: 100px; line-height: 1.5; }
+  .lp-input-group { margin-bottom: 12px; }
+  .lp-input-label {
+    display: block; font-size: 12px; font-weight: 500;
+    color: var(--text-muted); margin-bottom: 5px; text-transform: uppercase;
+    letter-spacing: .04em;
+  }
+
+  /* ── Buttons ─────────────────────────────────────────── */
+  .lp-btn-primary {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--brand); color: #fff;
+    padding: 9px 22px; border-radius: 20px;
+    font-size: 14px; font-weight: 600; border: none; cursor: pointer;
+    text-decoration: none; transition: background .2s, transform .1s;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .lp-btn-primary:hover { background: var(--brand-dark); color: #fff; transform: translateY(-1px); }
+
+  .lp-btn-outline {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: transparent; color: var(--brand);
+    padding: 8px 20px; border-radius: 20px;
+    font-size: 14px; font-weight: 600;
+    border: 1.5px solid var(--brand); cursor: pointer;
+    text-decoration: none; transition: background .2s;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .lp-btn-outline:hover { background: var(--brand-light); color: var(--brand); }
+
+  .lp-btn-ghost {
+    display: inline-flex; align-items: center; gap: 5px;
+    background: transparent; color: var(--text-muted);
+    padding: 6px 10px; border-radius: 6px;
+    font-size: 13px; font-weight: 500; border: none; cursor: pointer;
+    text-decoration: none; transition: background .15s, color .15s;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .lp-btn-ghost:hover { background: var(--surface); color: var(--text-primary); }
+
+  /* ── Action bar ──────────────────────────────────────── */
+  .lp-actions {
+    display: flex; align-items: center; gap: 10px;
+    padding: 16px 24px;
+    border-top: 1px solid var(--border);
+    background: #fafaf8;
+  }
+
+  /* ── Role badge ──────────────────────────────────────── */
+  .lp-role-badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 3px 10px; border-radius: 12px;
+    font-size: 11px; font-weight: 600; letter-spacing: .03em;
+    text-transform: uppercase;
+    background: var(--brand-light); color: var(--brand);
+  }
+
+  /* ── Back nav ────────────────────────────────────────── */
+  .lp-breadcrumb {
+    display: flex; align-items: center; gap: 8px;
+    margin-bottom: 16px; font-size: 13px; color: var(--text-muted);
+  }
+  .lp-breadcrumb a { color: var(--text-muted); text-decoration: none; }
+  .lp-breadcrumb a:hover { color: var(--brand); }
+
+
+/* ── Publications ───────────────────────────────────── */
+.lp-publication-item{
+    display:flex;
+    gap:14px;
+    align-items:flex-start;
+}
+
+.lp-publication-icon{
+    width:48px;
+    height:48px;
+    border-radius:8px;
+    border:1px solid rgba(10,102,194,.08);
+    background:var(--brand-light);
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    flex-shrink:0;
+}
+
+.lp-publication-icon i{
+    font-size:22px;
+    color:var(--brand);
+}
+
+.lp-publication-content{
+    flex:1;
+    min-width:0;
+}
+
+.lp-publication-list{
+    margin:0;
+    padding-left:18px;
+}
+
+.lp-publication-list li{
+    margin-bottom:12px;
+    line-height:1.6;
+    color:var(--text-primary);
+    font-size:15px;
+}
+
+.lp-publication-muted{
+    color:var(--text-muted);
+    font-style:italic;
+    margin:0;
+}
+
+</style>
+
+
+<div class="content-wrapper" style="background: var(--surface, #F3F2EE) !important; min-height: 100vh;">
+<section class="content" style="padding: 24px 0;">
+<div class="lp-wrapper">
+
+  <!-- Breadcrumb -->
+  <div class="lp-breadcrumb">
+    {% if role == 'faculty' %}
+      <a href="{% url 'accounts:faculty_dashboard' %}"><i class="fas fa-home" style="font-size:12px;"></i> Dashboard</a>
+    {% elif role == 'alumni' %}
+      <a href="{% url 'accounts:alumni_dashboard' %}"><i class="fas fa-home" style="font-size:12px;"></i> Dashboard</a>
     {% else %}
-      <div style="height:220px; background:#ccc;"></div>
+      <a href="{% url 'accounts:student_dashboard' %}"><i class="fas fa-home" style="font-size:12px;"></i> Dashboard</a>
+    {% endif %}
+    <i class="fas fa-chevron-right" style="font-size:10px;"></i>
+    <span>Profile</span>
+  </div>
+
+
+  <form method="POST" enctype="multipart/form-data" id="profile-form">
+    {% csrf_token %}
+
+    <!-- ════ HERO CARD ════ -->
+    <div class="lp-card">
+
+      <!-- Cover Photo -->
+      <div class="lp-cover">
+        {% if profile.cover_photo %}
+          <img src="{{ profile.cover_photo.url }}" alt="Cover photo" class="cover-img">
+        {% else %}
+          <div class="cover-pattern"></div>
+        {% endif %}
+
+        {% if edit_mode %}
+        <div class="lp-cover-edit">
+          <label for="id_cover_photo">
+            <i class="fas fa-camera"></i> Change Cover
+            <input type="file" name="cover_photo" id="id_cover_photo" accept="image/*">
+          </label>
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- Avatar + Name row -->
+      <div style="display:flex; align-items:flex-end; justify-content:space-between; padding-right:24px; flex-wrap:wrap;">
+
+        <div class="lp-avatar-wrap">
+          {% if profile.profile_pic %}
+            <img src="{{ profile.profile_pic.url }}" alt="Profile picture" class="lp-avatar">
+          {% else %}
+            <img src="https://ui-avatars.com/api/?name={{ profile.user.get_full_name|urlencode|default:profile.user.username }}&background=0B3D2E&color=ffffff&size=128"
+                 alt="Avatar" class="lp-avatar">
+          {% endif %}
+
+          {% if edit_mode %}
+          <div class="lp-avatar-edit">
+            <label for="id_profile_pic" title="Change photo">
+              <i class="fas fa-camera"></i>
+              <input type="file" name="profile_pic" id="id_profile_pic" accept="image/*">
+            </label>
+          </div>
+          {% endif %}
+        </div>
+
+        <!-- Role badge (view mode only) -->
+        {% if not edit_mode %}
+        <div style="padding-bottom: 16px;">
+          <span class="lp-role-badge">
+            {% if role == 'faculty' %}
+              <i class="fas fa-chalkboard-teacher" style="font-size:10px;"></i> Faculty
+            {% elif role == 'alumni' %}
+              <i class="fas fa-award" style="font-size:10px;"></i> Alumni
+            {% else %}
+              <i class="fas fa-user-graduate" style="font-size:10px;"></i> Student
+            {% endif %}
+          </span>
+        </div>
+        {% endif %}
+
+      </div>
+
+      </div>
+     
+      
+<!-- ════ HERO CARD START ════ -->
+<div class="lp-card" style="margin-bottom: 20px; padding: 24px; background: #ffffff; border-radius: var(--radius); box-shadow: var(--shadow);">
+  <!-- Hero body -->
+  <div class="lp-hero-body">
+    <div class="lp-hero-top" style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 16px;">
+
+      <div style="flex:1; min-width:220px;">
+        <p class="lp-name" style="font-size: 24px; font-weight: bold; margin: 0 0 4px 0;">{{ request.user.get_full_name|default:request.user.username }}</p>
+        <p class="lp-username" style="color: var(--text-muted); margin: 0 0 12px 0;">@{{ request.user.username }}</p>
+        
+        {% if edit_mode %}
+          <!-- EDIT MODE: Jab user edit par click karega toh ye box dikhega -->
+          <div class="lp-input-group" style="margin-top: 10px;">
+            <label class="lp-input-label">Headline / Bio</label>
+            <input type="text" name="bio" class="form-control" 
+                   placeholder="e.g. Android Developer Intern | Python Enthusiast" 
+                   value="{{ profile.bio|default:'' }}"
+                    style="width: 100%; border: 1.5px solid var(--border); border-radius: 8px; padding: 10px 14px;">
+          </div>
+
+        {% else %}
+          <p class="lp-headline" style="font-size: 16px; margin: 0 0 12px 0; color: var(--text-primary); font-weight: 500;">
+            {{ profile.bio|default:"Add a short headline about yourself" }}
+          </p>
+         
+          <div class="lp-meta" style="display: flex; gap: 16px; flex-wrap: wrap; color: var(--text-muted); font-size: 14px;">
+            {% if role == 'student' and profile.batch_year %}
+              <span><i class="fas fa-calendar-alt"></i> Batch {{ profile.batch_year }}</span>
+            
+            {% elif role == 'alumni' and profile.job_title %}
+              <!-- FIXED: Hat hatakar workplace bag icon kiya aur direct profession display ho rha bina kisi extra text ke -->
+              <span>
+                <i class="fas fa-briefcase"></i> {{ profile.job_title }}
+                {% if profile.current_company %} at {{ profile.current_company }}{% endif %}
+              </span>
+            
+            {% elif role == 'faculty' %}
+              {% if profile.current_designation %}
+                <span><i class="fas fa-id-badge"></i> {{ profile.current_designation }}</span>
+              {% else %}
+                <span><i class="fas fa-id-badge"></i> Faculty Member</span>
+              {% endif %}
+            {% endif %}
+            
+            {% if request.user.email %}
+              <span><i class="fas fa-envelope"></i> {{ request.user.email }}</span>
+            {% endif %}
+          </div>
+        {% endif %}
+      </div>
+
+      <!-- Action buttons wrapper -->
+      <div style="display:flex; gap:8px; padding-top:4px; flex-wrap:wrap;">
+        {% if edit_mode %}
+          <button type="submit" class="ep-btn-primary">
+            <i class="fas fa-save"></i> Save Profile
+          </button>
+          <a href="{% url 'accounts:view_profile' %}" class="ep-btn-outline">
+            Cancel
+          </a>
+        {% else %}
+          <a href="{% url 'accounts:edit_profile' %}" class="ep-btn-primary">
+            <i class="fas fa-pencil-alt"></i> Edit Profile
+          </a>
+        {% endif %}
+      </div>
+
+    </div>
+  </div>
+</div>
+<!-- ════ END HERO CARD ════ -->
+
+    <!-- ════ ABOUT CARD ════ -->
+    <div class="lp-card">
+      <div class="lp-section">
+        <p class="lp-section-title">About</p>
+
+        {% if edit_mode %}
+          <textarea name="about" class="lp-textarea" rows="5"
+                    placeholder="Write a brief summary about yourself, your interests, and goals…">{{ profile.about }}</textarea>
+        {% else %}
+          {% if profile.about %}
+            <p class="lp-about-text">{{ profile.about }}</p>
+          {% else %}
+            <p class="lp-about-text lp-about-muted">Write something about yourself to help others know you better.</p>
+          {% endif %}
+        {% endif %}
+      </div>
+    </div>
+    <!-- ════ END ABOUT CARD ════ -->
+
+<!-- ════ EDUCATION CARD ════ -->
+{% if role == 'student' or role == 'alumni' %}
+<div class="lp-card">
+  <div class="lp-section">
+    <p class="lp-section-title" style="font-size: 18px; font-weight: bold; margin-bottom: 16px; color: var(--text-primary);">Education</p>
+
+    <!-- Clean View Mode Only -->
+    <div class="lp-edu-item" style="display: flex; gap: 16px; align-items: flex-start; margin-bottom: 16px;">
+      <div class="lp-edu-icon" style="background: #E4F1EA; color: #0B3D2E; padding: 12px; border-radius: 50%; font-size: 18px;">
+        <i class="fas fa-university"></i>
+      </div>
+      <div>
+        <p class="lp-edu-name" style="font-size: 16px; font-weight: 600; margin: 0; color: var(--text-primary);">
+          {{ request.user.institution.name|default:"University Name" }}
+        </p>
+        <p class="lp-edu-dept" style="margin: 4px 0; color: var(--text-secondary); font-size: 14px;">
+          {% if role == 'student' %}{{ student.department|default:"Course not added" }}{% else %}{{ alumni.recent_degree|default:"Course not added" }}{% endif %}
+        </p>
+        {% if role == 'student' %}
+          <p class="lp-edu-year" style="margin: 0; color: var(--text-muted); font-size: 13px;">
+            <i class="far fa-calendar-alt"></i> Batch: {{ student.batch_year|default:"Timeline not added" }}
+          </p>
+        {% else %}
+          <p class="lp-edu-year" style="margin: 0; color: var(--text-muted); font-size: 13px;">
+            <i class="fas fa-graduation-cap"></i> Graduated: {{ alumni.batch|default:"Not Added" }}
+          </p>
+        {% endif %}
+      </div>
+    </div>
+    
+    <!-- Alumni Extra View (Sirf tabhi dikhe jab data ho) -->
+    {% if role == 'alumni' and alumni.past_degree_course1 %}
+      <div class="lp-edu-item" style="display: flex; gap: 16px; align-items: flex-start; margin-top: 20px; padding-top: 16px; border-top: 1px solid #f0f0f0;">
+        <div class="lp-edu-icon" style="background: #E4F1EA; color: #0B3D2E; padding: 12px; border-radius: 50%; font-size: 18px;">
+          <i class="fas fa-graduation-cap"></i>
+        </div>
+        <div>
+          <p class="lp-edu-name" style="font-size: 16px; font-weight: 600; margin: 0; color: var(--text-primary);">{{ alumni.past_university1|default:"Other Institution" }}</p>
+          <p class="lp-edu-dept" style="margin: 4px 0; color: var(--text-secondary); font-size: 14px;">{{ alumni.past_degree_course1 }}</p>
+          <p class="lp-edu-year" style="margin: 0; color: var(--text-muted); font-size: 13px;"><i class="far fa-calendar-alt" style="font-size: 12px;"></i> Year: {{ alumni.batch1|default:"N/A" }}</p>
+        </div>
+      </div>
+    {% endif %}
+    
+  </div>
+</div>
+{% endif %}
+<!-- ════ END EDUCATION CARD ════ -->
+
+<!-- ════ WORK EXPERIENCE CARD ════ -->
+    {% if role == 'faculty' or role == 'alumni' %}
+    <div class="lp-card" style="margin-top: 20px;">
+      <div class="lp-section">
+        <p class="lp-section-title">Work Experience</p>
+
+        {% if edit_mode %}
+          <!-- ================= EDIT MODE SHURU ================= -->
+          
+          <!-- 1. CURRENT EXPERIENCE -->
+          <p style="font-size: 14px; font-weight: 600; color: var(--brand); margin-bottom: 12px;">Current Position</p>
+          
+          <div class="lp-input-group">
+            <label class="lp-input-label">Company / Institution</label>
+            {% if role == 'faculty' %}
+              <!-- Faculty Locked/Non-Editable -->
+              <p style="font-size: 15px; font-weight: 600; color: var(--text-primary); margin: 5px 0 0 0;">
+                {{ request.user.institution.name|default:"University Name" }}
+              </p>
+              <small style="color: var(--text-muted); font-size: 11px;">(This field cannot be changed)</small>
+              
+            {% else %}
+              
+              <input type="text" name="current_company" class="lp-input"
+                     placeholder="e.g. Google / Microsoft"
+                     value="{{ alumni.current_company|default:'' }}">
+            {% endif %}
+          </div>
+
+          <div class="lp-input-group">
+            <label class="lp-input-label">Designation / Role</label>
+            <input type="text" name="current_designation" class="lp-input"
+                   placeholder="{% if role == 'faculty' %}e.g. Assistant Professor{% else %}e.g. Software Engineer{% endif %}"
+                   value="{% if role == 'faculty' %}{{ faculty.current_designation|default:'' }}{% else %}{{ alumni.job_title|default:'' }}{% endif %}">
+          </div>
+
+          <div class="lp-input-group" style="margin-bottom: 16px;">
+            <label class="lp-input-label">Timeline / Duration</label>
+            <input type="text" name="current_join_year" class="lp-input"
+                   placeholder="e.g. 2024–Present"
+                   value="{% if role == 'faculty' %}{{ faculty.current_join_year|default:'' }}{% else %}{{ alumni.current_join_year|default:'' }}{% endif %}">
+          </div>
+
+
+          <!-- 2. PAST EXPERIENCE 1 (Optional) -->
+          <hr style="border: 0; border-top: 1px dashed #ddd; margin: 24px 0;">
+          <p style="font-size: 14px; font-weight: 600; color: var(--text-secondary); margin-bottom: 12px;">Previous Experiences (Optional)</p>
+          
+          <div class="lp-input-group">
+            <label class="lp-input-label">Previous Company</label>
+            <input type="text" name="past_company_1" class="lp-input"
+                   placeholder="e.g. Amazon / XYZ College"
+                   value="{% if role == 'faculty' %}{{ faculty.past_company_1|default:'' }}{% else %}{{ alumni.past_company_1|default:'' }}{% endif %}">
+          </div>
+
+          <div class="lp-input-group">
+            <label class="lp-input-label">Designation / Role</label>
+            <input type="text" name="past_designation_1" class="lp-input"
+                   placeholder="e.g. Senior Lecturer / Analyst"
+                   value="{% if role == 'faculty' %}{{ faculty.past_designation_1|default:'' }}{% else %}{{ alumni.past_designation_1|default:'' }}{% endif %}">
+          </div>
+
+          <div class="lp-input-group" style="margin-bottom: 16px;">
+            <label class="lp-input-label">Timeline</label>
+            <input type="text" name="past_timeline_1" class="lp-input"
+                   placeholder="e.g. 2022–2024"
+                   value="{% if role == 'faculty' %}{{ faculty.past_timeline_1|default:'' }}{% else %}{{ alumni.past_timeline_1|default:'' }}{% endif %}">
+          </div>
+
+
+          <!-- 3. PAST EXPERIENCE 2 (Optional) -->
+          <hr style="border: 0; border-top: 1px dashed #ddd; margin: 24px 0;">
+          <p style="font-size: 14px; font-weight: 600; color: var(--text-secondary); margin-bottom: 12px;">Previous Experience 2 (Optional)</p>
+          
+          <div class="lp-input-group">
+            <label class="lp-input-label">Previous Company </label>
+            <input type="text" name="past_company_2" class="lp-input"
+                   placeholder="e.g. TCS / ABC Institute"
+                   value="{% if role == 'faculty' %}{{ faculty.past_company_2|default:'' }}{% else %}{{ alumni.past_company_2|default:'' }}{% endif %}">
+          </div>
+
+          <div class="lp-input-group">
+            <label class="lp-input-label">Designation / Role</label>
+            <input type="text" name="past_designation_2" class="lp-input"
+                   placeholder="e.g. Junior Developer / Tutor"
+                   value="{% if role == 'faculty' %}{{ faculty.past_designation_2|default:'' }}{% else %}{{ alumni.past_designation_2|default:'' }}{% endif %}">
+          </div>
+
+          <div class="lp-input-group" style="margin-bottom: 0;">
+            <label class="lp-input-label">Timeline</label>
+            <input type="text" name="past_timeline_2" class="lp-input"
+                   placeholder="e.g. 2020–2022"
+                   value="{% if role == 'faculty' %}{{ faculty.past_timeline_2|default:'' }}{% else %}{{ alumni.past_timeline_2|default:'' }}{% endif %}">
+          </div>
+
+        {% else %}
+          <!-- ================= VIEW MODE SHURU ================= -->
+          
+          <!-- 1. Current Position Render -->
+          <div class="lp-edu-item">
+            <div class="lp-edu-icon" style="background: #e6f4ea; color: #137333;">
+              <i class="fas fa-briefcase"></i>
+            </div>
+            <div>
+              <p class="lp-edu-name">
+                {% if role == 'faculty' %}{{ request.user.institution.name }}{% else %}{{ alumni.current_company|default:"Company not added" }}{% endif %}
+              </p>
+              <p class="lp-edu-dept">
+                {% if role == 'faculty' %}{{ faculty.current_designation|default:"Faculty Role" }}{% else %}{{ alumni.job_title|default:"Designation not added" }}{% endif %}
+              </p>
+              <p class="lp-edu-year">
+                <i class="far fa-clock" style="font-size: 12px;"></i> 
+                {% if role == 'faculty' %}{{ faculty.current_join_year|default:"Timeline not added" }}{% else %}{{ alumni.current_join_year|default:"Timeline not added" }}{% endif %}
+              </p>
+            </div>
+          </div>
+
+          <!-- 2. Past Experience 1 (Sirf tabhi dikhega jab filled ho) -->
+          {% if role == 'faculty' and faculty.past_company_1 or role == 'alumni' and alumni.past_company_1 %}
+          <div class="lp-edu-item" style="margin-top: 20px; padding-top: 16px; border-top: 1px solid #f0f0f0;">
+            <div class="lp-edu-icon" style="background: #f1f3f4; color: #5f6368;">
+              <i class="fas fa-history"></i>
+            </div>
+            <div>
+              <p class="lp-edu-name">
+                {% if role == 'faculty' %}{{ faculty.past_company_1 }}{% else %}{{ alumni.past_company_1 }}{% endif %}
+              </p>
+              <p class="lp-edu-dept">
+                {% if role == 'faculty' %}{{ faculty.past_designation_1 }}{% else %}{{ alumni.past_designation_1 }}{% endif %}
+              </p>
+              <p class="lp-edu-year">
+                <i class="far fa-calendar-alt" style="font-size: 12px;"></i> 
+                {% if role == 'faculty' %}{{ faculty.past_timeline_1 }}{% else %}{{ alumni.past_timeline_1 }}{% endif %}
+              </p>
+            </div>
+          </div>
+          {% endif %}
+
+          <!-- 3. Past Experience 2 (Sirf tabhi dikhega jab filled ho) -->
+          {% if role == 'faculty' and faculty.past_company_2 or role == 'alumni' and alumni.past_company_2 %}
+          <div class="lp-card-item" style="margin-top: 20px; padding-top: 16px; border-top: 1px solid #f0f0f0; display: flex; gap: 15px;">
+            <div class="lp-edu-item" style="margin: 0; padding: 0; border: none; width: 100%;">
+              <div class="lp-edu-icon" style="background: #f1f3f4; color: #5f6368;">
+                <i class="fas fa-history"></i>
+              </div>
+              <div>
+                <p class="lp-edu-name">
+                  {% if role == 'faculty' %}{{ faculty.past_company_2 }}{% else %}{{ alumni.past_company_2 }}{% endif %}
+                </p>
+                <p class="lp-edu-dept">
+                  {% if role == 'faculty' %}{{ faculty.past_designation_2 }}{% else %}{{ alumni.past_designation_2 }}{% endif %}
+                </p>
+                <p class="lp-edu-year">
+                  <i class="far fa-calendar-alt" style="font-size: 12px;"></i> 
+                  {% if role == 'faculty' %}{{ faculty.past_timeline_2 }}{% else %}{{ alumni.past_timeline_2 }}{% endif %}
+                </p>
+              </div>
+            </div>
+          </div>
+          {% endif %}
+
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
+    <!-- ════ END WORK EXPERIENCE CARD ════ -->
+
+<!-- ════ FACULTY RESEARCH & PUBLICATIONS CARD ════ -->
+{% if role == 'faculty' %}
+<div class="lp-card">
+  <div class="lp-section">
+    <!-- Icon now sits inline with the heading -->
+    <p class="lp-section-title" style="display: flex; align-items: center; justify-content: flex-start;gap: 10px;">
+      <span style="background: #E4F1EA; color: #0B3D2E; width: 32px; height: 32px; border-radius: 50%; font-size: 15px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+        <i class="fas fa-book-reader"></i>
+      </span>
+      Research & Publications
+    </p>
+
+    {% if profile.research_publications %}
+      <!-- Content only, full width, no side icon anymore -->
+      <div class="lp-publication-content" style="font-size:15px;color:var(--text-primary);line-height:1.7;white-space:pre-line;">
+        {{ profile.research_publications }}
+      </div>
+    {% else %}
+    <!-- Empty State matching all other cards -->
+      <div style="display: flex; align-items: center; gap: 12px; color: var(--text-muted); font-size: 14px; font-style: italic; margin-top: 10px;">
+        <i class="fas fa-info-circle" style="color: #ccc;"></i>
+        <span>No research papers or publications added yet.</span>
+      </div>
     {% endif %}
 
-```
-{% if edit_mode %}
-  <input type="file" name="cover_photo" class="form-control mt-2">
-{% endif %}
-```
-
-  </div>
-
-  <!-- Profile Overlay -->
-
-  <div class="card-body text-center" style="margin-top:-70px;">
-
-```
-{% if student.profile_pic %}
-  <img src="{{ student.profile_pic.url }}"
-       style="width:140px; height:140px; object-fit:cover; border-radius:50%; border:4px solid white;">
-{% else %}
-  <img src="https://via.placeholder.com/150"
-       style="width:140px; height:140px; border-radius:50%; border:4px solid white;">
-{% endif %}
-
-{% if edit_mode %}
-  <input type="file" name="profile_pic" class="form-control mt-2">
-{% endif %}
-
-<h3 class="mt-2">{{ request.user.username }}</h3>
-```
-
-  </div>
-
-</div>
-
-<!-- ABOUT -->
-
-<div class="card mt-3">
-  <div class="card-header"><b>About</b></div>
-  <div class="card-body">
-
-```
-{% if edit_mode %}
-  <textarea name="about" class="form-control" rows="4">{{ student.about }}</textarea>
-{% else %}
-  <p>{{ student.about|default:"Write something about yourself" }}</p>
-{% endif %}
-```
-
   </div>
 </div>
-
-<!-- EDUCATION -->
-
-<div class="card mt-3">
-  <div class="card-header"><b>Education</b></div>
-  <div class="card-body">
-
-```
-{% if edit_mode %}
-  <input type="text" name="university" class="form-control mb-2"
-         value="{{ student.user.institution.name }}">
-
-  <input type="text" name="department" class="form-control mb-2"
-         value="{{ student.department }}">
-
-  <input type="text" name="batch_year" class="form-control"
-         value="{{ student.batch_year }}">
-{% else %}
-  <h5>{{ student.user.institution.name|default:"University Name" }}</h5>
-  <p class="mb-1">{{ student.department|default:"Course Name" }}</p>
-  <small class="text-muted">
-    {{ student.batch_year|default:"Timeline not added" }}
-  </small>
 {% endif %}
-```
+<!-- ════ END FACULTY RESEARCH & PUBLICATIONS CARD ════ -->
 
+<!-- ════ SKILLS CARD ════ -->
+{% if role == 'student' or role == 'alumni' %}
+<div class="lp-card">
+  <div class="lp-section">
+    <p class="lp-section-title">Skills</p>
+
+    {% if edit_mode %}
+      <div class="lp-input-group" style="margin-bottom:6px;">
+        <label class="lp-input-label">Skills (comma-separated)</label>
+        <!-- Bina kisi error ke direct profile.skills use karo -->
+        <input type="text" name="skills" class="lp-input"
+               placeholder="e.g. Python, Machine Learning, Django, SQL"
+               value="{{ profile.skills|default:'' }}">
+      </div>
+      <p style="font-size:12px; color:var(--text-muted); margin:0;">
+        Separate each skill with a comma. They'll appear as individual tags.
+      </p>
+    {% else %}
+      {% if profile.skills %}
+        <div class="lp-skills-grid">
+          {% for skill in profile.skills.split %}
+            {% if skill %}
+            <span class="lp-skill-pill">
+              <i class="fas fa-check-circle" style="font-size:11px; color:var(--brand);"></i>
+              {{ skill|cut:"," }}
+            </span>
+            {% endif %}
+          {% endfor %}
+        </div>
+      {% else %}
+        <p style="color:var(--text-muted); font-size:14px; margin:0; font-style:italic;">
+          No skills added yet. Edit your profile to showcase your abilities.
+        </p>
+      {% endif %}
+    {% endif %}
   </div>
 </div>
-
-<!-- SKILLS -->
-
-<div class="card mt-3">
-  <div class="card-header"><b>Skills</b></div>
-  <div class="card-body">
-
-```
-{% if edit_mode %}
-  <input type="text" name="skills" class="form-control"
-         value="{{ student.skills }}">
-{% else %}
-  <p>{{ student.skills|default:"No skills added" }}</p>
 {% endif %}
-```
-
-  </div>
-</div>
-
-<!-- ACTION BUTTONS -->
-
-<div class="text-center mt-4">
-
-{% if edit_mode %} <button type="submit" class="btn btn-success">Save</button> <a href="{% url 'accounts:student_profile' %}" class="btn btn-secondary">Cancel</a>
-{% else %} <a href="?edit=true" class="btn btn-primary">Edit Profile</a>
-{% endif %}
-
-</div>
-
-</form>
+<!-- ════ END SKILLS CARD ════ -->
+  </form>
 
 </div>
 </section>
 </div>
+{% endblock %}
 
+{% block extra_js %}
+<script>
+  /* Live preview of uploaded images before form submit */
+  document.getElementById('id_profile_pic')?.addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      document.querySelector('.lp-avatar').src = ev.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+
+  document.getElementById('id_cover_photo')?.addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      const cover = document.querySelector('.lp-cover');
+      let img = cover.querySelector('img.cover-img');
+      if (!img) {
+        img = document.createElement('img');
+        img.className = 'cover-img';
+        cover.insertBefore(img, cover.firstChild);
+      }
+      img.src = ev.target.result;
+      const pattern = cover.querySelector('.cover-pattern');
+      if (pattern) pattern.style.display = 'none';
+    };
+    reader.readAsDataURL(file);
+  });
+</script>
 {% endblock %}
