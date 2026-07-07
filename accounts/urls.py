@@ -30,7 +30,22 @@ urlpatterns = [
     path('send-message/<int:convo_id>/', views.send_message, name='send_message'),
     path('start-chat/<int:user_id>/', views.start_chat, name='start_chat'),
     path('accept-message/<int:convo_id>/', views.accept_message_request, name='accept_message_request'),
-    path("profile/", views.student_profile, name="student_profile"),
-    path('edit-profile/', views.edit_profile, name='edit_profile')
+    path("profile/", views.view_profile, name="view_profile"),
+    path('edit-profile/', views.edit_profile, name='edit_profile'),
+
+    path('notifications/', views.notifications_list, name='notifications_list'),
+    path('faculty/send-notification/', views.faculty_send_notification, name='faculty_send_notification'),
+    path('verification/submit/', views.submit_verification_request, name='submit_verification_request'),
+
+
+
+
+
+
+
+
+
+
+
 ]
 

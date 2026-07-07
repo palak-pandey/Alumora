@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from .models import User, Institution
-
+from .models import VerificationRequest
 
 
 
@@ -167,7 +167,35 @@ class InstitutionAdmin(admin.ModelAdmin):
 
         return False
 
+class VerificationRequestAdmin(admin.ModelAdmin):
+    list_display = ('user', 'full_submitted_name', 'abc_apaar_id', 'status', 'certificate_preview', 'faculty_approved_by', 'admin_action', 'created_at')
+    list_filter = ('status', 'user__institution')
+    readonly_fields = ('certificate_preview',)
+
+    def full_submitted_name(self, obj):
+        return f"{obj.first_name} {obj.last_name}"
+
+    def certificate_preview(self, obj):
+        if obj.degree_certificate:
+            return format_html('<a href="{}" target="_blank">View Certificate</a>', obj.degree_certificate.url)
+        return "—"
+
+    def admin_action(self, obj):
+        if obj.status == "FACULTY_APPROVED":
+            url = reverse('accounts:admin_approve', args=[obj.id])
+            return format_html('<a class="button" href="{}">Approve</a>', url)
+        return obj.get_status_display()
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        if request.user.is_superuser:
+            return qs
+        if request.user.role == 'ADMIN' and request.user.institution:
+            return qs.filter(user__institution=request.user.institution)
+        return qs.none()
+
 
 # Register your models here.    
 admin.site.register(User, UserAdmin)
 admin.site.register(Institution, InstitutionAdmin)
+admin.site.register(VerificationRequest, VerificationRequestAdmin)

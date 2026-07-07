@@ -1,0 +1,24 @@
+{
+  "name": "alumora",
+  "version": "1.0.0",
+  "description": "Alumora is a Django-based alumni-student networking platform designed to connect students, alumni, and institutions.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/palak-pandey/Alumora.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/palak-pandey/Alumora/issues"
+  },
+  "homepage": "https://github.com/palak-pandey/Alumora#readme",
+  "devDependencies": {
+    "tailwindcss": "^3.4.19"
+  }
+}

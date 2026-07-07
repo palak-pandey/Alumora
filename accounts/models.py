@@ -13,7 +13,6 @@ class Institution(models.Model):
 
 
 
-
 class User(AbstractUser):
     ROLE_CHOICES = [
         ('SUPER_ADMIN', 'Super Admin'),
@@ -63,23 +62,60 @@ class StudentProfile(models.Model):
 class FacultyProfile(models.Model):
     user = models.OneToOneField(User, on_delete= models.CASCADE, related_name='faculty_profile')
     department =models.CharField(max_length=100, null = True, blank = True) 
-    designation = models.CharField(max_length=100, null = True, blank = True)
+    bio = models.TextField(blank=True, null=True)
+    about = models.TextField(blank=True, null=True)
+    profile_pic = models.ImageField(upload_to='profile_pics/', null=True, blank=True)
+    cover_photo = models.ImageField(upload_to='cover_photos/', null=True, blank=True)
+    
+    current_designation = models.CharField(max_length=255, blank=True, null=True)
+    current_join_year = models.CharField(max_length=50, blank=True, null=True)
+
+    past_company_1 = models.CharField(max_length=255, blank=True, null=True, verbose_name="Past Institution/Company 1")
+    past_designation_1 = models.CharField(max_length=255, blank=True, null=True)
+    past_timeline_1 = models.CharField(max_length=100, blank=True, null=True)
+   
+    past_company_2 = models.CharField(max_length=255, blank=True, null=True, verbose_name="Past Institution/Company 2")
+    past_designation_2 = models.CharField(max_length=255, blank=True, null=True)
+    past_timeline_2 = models.CharField(max_length=100, blank=True, null=True)
+
+    # ── RESEARCH & PUBLICATIONS ──
+    research_publications = models.TextField(blank=True, null=True)
 
     def __str__(self):
         return f"Faculty Profile - {self.user.username}"
     
 
-
-
 #Alumni Profile ************************************************************************************************
 class AlumniProfile(models.Model):
     user =models.OneToOneField(User, on_delete= models.CASCADE, related_name='alumni_profile')
+    bio = models.TextField(blank=True, null=True)
+    skills = models.CharField(max_length=255, blank=True, null=True)
+    about = models.TextField(blank=True, null=True)
+    profile_pic = models.ImageField(upload_to='profile_pics/', null=True, blank=True)
+    cover_photo = models.ImageField(upload_to='cover_photos/', null=True, blank=True)
 
-    graduation_year= models.IntegerField(null = True, blank = True)
-    degree = models.CharField(max_length=100, null = True, blank= True)
-    current_company = models.CharField(max_length= 200, blank= True)
+    #work experience
+    current_company = models.CharField(max_length= 200, blank= True) 
     job_title = models.CharField(max_length= 200, blank= True)
+    current_join_year = models.CharField(max_length=50, blank=True, null=True)
+    
+    past_company_1 = models.CharField(max_length=255, blank=True, null=True, verbose_name="Past Institution/Company 1")
+    past_designation_1 = models.CharField(max_length=255, blank=True, null=True)
+    past_timeline_1 = models.CharField(max_length=100, blank=True, null=True)
+   
+    past_company_2 = models.CharField(max_length=255, blank=True, null=True, verbose_name="Past Institution/Company 2")
+    past_designation_2 = models.CharField(max_length=255, blank=True, null=True)
+    past_timeline_2 = models.CharField(max_length=100, blank=True, null=True)
 
+   #education 
+    recent_degree = models.CharField(max_length=255, blank=True, null=True, verbose_name="Past Degree/Course")
+    batch = models.CharField(max_length=100, blank=True, null=True)
+    
+    past_university1 = models.CharField(max_length=255, blank=True, null=True, verbose_name="Past Institution Name")
+    past_degree_course1 = models.CharField(max_length=255, blank=True, null=True, verbose_name="Past Degree/Course")
+    batch1= models.CharField(max_length=100, blank=True, null=True)
+    
+    skills = models.CharField(max_length=255, blank=True, null=True) 
     mentorship_available = models.BooleanField(default= False)
     
 
@@ -105,6 +141,15 @@ class VerificationRequest(models.Model):
         on_delete=models.CASCADE,
         related_name='verification_requests'
     )
+    
+    first_name = models.CharField(max_length=100)
+    last_name = models.CharField(max_length=100)
+    father_name = models.CharField(max_length=100)
+    degree_course = models.CharField(max_length=200)
+    abc_apaar_id = models.CharField(max_length=50, verbose_name="ABC / APAAR ID")
+    degree_certificate = models.ImageField(upload_to='verification_documents/')
+
+
 
     faculty_approved_by = models.ForeignKey(
         User,
@@ -332,8 +377,8 @@ class SuspensionLog(models.Model):
     institution = models.ForeignKey(
         'Institution',
         on_delete=models.CASCADE,
-        related_name='suspensions'
-    )
+        related_name='suspensions',
+        null= True, blank= True)
 
     reason = models.TextField()
 
@@ -344,7 +389,7 @@ class SuspensionLog(models.Model):
 
     suspension_type = models.CharField(
         max_length=20,
-        choices=SUSPENSION_TYPE
+        choices=SUSPENSION_TYPE,null =True, blank=True
     )
 
     duration_days = models.IntegerField(
@@ -460,3 +505,33 @@ class Message(models.Model):
     class Meta:
         ordering = ['created_at']  
 
+
+class Notification(models.Model):
+    TYPE_CHOICES = [
+        ('MENTORSHIP_REQUEST', 'Mentorship Request'),
+        ('MENTORSHIP_ACCEPTED', 'Mentorship Accepted'),
+        ('MENTORSHIP_REJECTED', 'Mentorship Rejected'),
+        ('FACULTY_ANNOUNCEMENT', 'Faculty Announcement'),
+        ('VERIFICATION_UPDATE', 'Verification Update'),
+        ('GENERAL', 'General'),
+    ]
+
+    recipient = models.ForeignKey(User, on_delete=models.CASCADE, related_name='notifications')
+    sender = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='sent_notifications')
+
+    notification_type = models.CharField(max_length=30, choices=TYPE_CHOICES, default='GENERAL')
+    title = models.CharField(max_length=150)
+    message = models.TextField()
+
+    # Optional deep-link, e.g. reverse('accounts:alumni_requests') or a chat URL
+    link_url = models.CharField(max_length=255, blank=True, null=True)
+
+    is_read = models.BooleanField(default=False)
+    email_sent = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.notification_type} → {self.recipient.username}"
