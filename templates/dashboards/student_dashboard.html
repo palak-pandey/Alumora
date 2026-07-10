@@ -1,43 +1,322 @@
-{% extends 'base.html' %}
+{% extends 'layouts/base.html' %}
 
 {% block content %}
+<style>
+  :root {
+    --sd-brand:       #0B3D2E;
+    --sd-brand-dark:  #062820;
+    --sd-brand-light: #E4F1EA;
+    --sd-card:        #FFFFFF;
+    --sd-text:        #14231C;
+    --sd-muted:       #5B6B62;
+    --sd-border:      #DCE6E0;
+    --sd-radius:      12px;
+    --sd-shadow:      0 1px 3px rgba(0,0,0,.08), 0 0 0 1px rgba(0,0,0,.03);
+    --sd-amber:       #B7791F;
+    --sd-amber-bg:    #FFF6E5;
+    --sd-danger:      #8C4A3F;
+    --sd-danger-bg:   #F6ECEA;
+  }
 
-<div class="container-fluid">
-    <div class="row mt-4">
+  .sd-wrap { font-family: 'DM Sans', sans-serif; color: var(--sd-text); }
 
-        <!-- Card 1 -->
-        <div class="col-lg-4 col-md-6 col-12">
-            <div class="small-box bg-success">
-                <div class="inner">
-                    <h4>Your Mentor</h4>
-                    <p>No mentor assigned</p>
-                </div>
-            </div>
-        </div>
+  .sd-header { margin-bottom: 22px; }
+  .sd-header h2 { font-family: 'Sora', sans-serif; font-weight: 700; font-size: 24px; margin: 0 0 4px; }
+  .sd-header p { color: var(--sd-muted); font-size: 14px; margin: 0; }
 
-        <!-- Card 2 -->
-        <div class="col-lg-4 col-md-6 col-12">
-            <div class="small-box bg-warning">
-                <div class="inner">
-                    <h3>0</h3>
-                    <p>Pending Requests</p>
-                    <a href="#" class="btn btn-light btn-sm mt-2">View Requests</a>
-                </div>
-            </div>
-        </div>
+  /* ── Stat cards: Left Aligned, items-start ── */
+  .sd-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 30px; }
+  .sd-stat {
+    background: var(--sd-card); border-radius: var(--sd-radius); box-shadow: var(--sd-shadow);
+    padding: 18px 20px; display: flex; flex-direction: column; align-items: flex-start; text-align: left; gap: 10px;
+  }
+  .sd-stat-icon {
+    width: 42px; height: 42px; border-radius: 50%; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center; font-size: 16px;
+    background: var(--sd-brand-light); color: var(--sd-brand);
+  }
+  .sd-stat.accent .sd-stat-icon { background: var(--sd-brand); color: #fff; }
+  .sd-stat .num { font-family: 'Sora', sans-serif; font-size: 24px; font-weight: 700; margin: 4px 0 0; line-height: 1.1; }
+  .sd-stat .label { font-size: 12px; color: var(--sd-muted); margin: 2px 0 0; }
+  .sd-stat .sub-label { font-size: 11px; color: var(--sd-muted); margin-top: 4px; font-weight: 500; }
 
-        <!-- Card 3 -->
-        <div class="col-lg-4 col-md-6 col-12">
-            <div class="small-box bg-info">
-                <div class="inner">
-                    <h4>Find Mentor</h4>
-                    <p>Browse Alumni</p>
-                    <a href="#" class="btn btn-light btn-sm mt-2">Search Alumni</a>
-                </div>
-            </div>
-        </div>
+  /* Find-mentor CTA card takes the 4th slot, left-aligned */
+  .sd-cta {
+    background: var(--sd-brand); border-radius: var(--sd-radius); box-shadow: var(--sd-shadow);
+    padding: 18px 20px; color: #fff; display: flex; flex-direction: column; justify-content: space-between; align-items: flex-start; text-align: left;
+  }
+  .sd-cta strong { font-family: 'Sora', sans-serif; font-size: 15px; }
+  .sd-cta span { font-size: 12px; opacity: .85; margin-top: 2px; }
+  .sd-cta a {
+    margin-top: 12px; align-self: flex-start; background: #fff; color: var(--sd-brand);
+    border-radius: 20px; padding: 6px 16px; font-size: 12.5px; font-weight: 700; text-decoration: none;
+  }
+  .sd-cta a:hover { background: var(--sd-brand-light); color: var(--sd-brand-dark); }
 
+  @media (max-width: 900px) { .sd-stats { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 500px) { .sd-stats { grid-template-columns: 1fr; } }
+
+  .sd-section { margin-bottom: 36px; }
+  .sd-section-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; flex-wrap: wrap; gap: 10px; }
+  .sd-section-title { font-family: 'Sora', sans-serif; font-weight: 700; font-size: 18px; margin: 0; }
+  .sd-section-link { font-size: 12.5px; font-weight: 600; color: var(--sd-brand); text-decoration: none; }
+  .sd-section-link:hover { color: var(--sd-brand-dark); text-decoration: underline; }
+
+  /* ── Tabs ── */
+  .sd-tabs { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+  .sd-tab {
+    background: var(--sd-card); border: 1.5px solid var(--sd-border); color: var(--sd-muted);
+    padding: 7px 16px; border-radius: 20px; font-size: 13px; font-weight: 600; cursor: pointer;
+  }
+  .sd-tab:hover { border-color: var(--sd-brand); color: var(--sd-brand); }
+  .sd-tab.active { background: var(--sd-brand); border-color: var(--sd-brand); color: #fff; }
+
+  /* ── Mentorship request preview cards ── */
+  .sd-list { display: flex; flex-direction: column; gap: 10px; }
+  .sd-item {
+    background: var(--sd-card); border-radius: var(--sd-radius); box-shadow: var(--sd-shadow);
+    padding: 14px 18px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+  }
+  .sd-avatar {
+    width: 42px; height: 42px; border-radius: 50%; flex-shrink: 0; object-fit: cover;
+    background: var(--sd-brand-light); color: var(--sd-brand);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Sora', sans-serif; font-weight: 700; font-size: 14px;
+  }
+  .sd-item-main { flex: 1; min-width: 160px; }
+  .sd-item-name { font-weight: 600; font-size: 14px; margin: 0; }
+  .sd-item-sub { font-size: 12px; color: var(--sd-muted); margin: 1px 0 0; }
+
+  .sd-pill {
+    display: inline-block; padding: 4px 12px; border-radius: 20px;
+    font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .03em;
+    white-space: nowrap;
+  }
+  .sd-pill.pending  { background: var(--sd-amber-bg); color: var(--sd-amber); }
+  .sd-pill.accepted { background: var(--sd-brand); color: #fff; }
+  .sd-pill.rejected { background: var(--sd-danger-bg); color: var(--sd-danger); }
+
+  .sd-empty { text-align: center; padding: 40px 20px; color: var(--sd-muted); background: var(--sd-card); border-radius: var(--sd-radius); box-shadow: var(--sd-shadow); }
+  .sd-empty i { font-size: 26px; color: var(--sd-border); display: block; margin-bottom: 8px; }
+
+  /* Pill Buttons - Forest Green Theme for Search Cards */
+  .ln-action-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 18px;
+    font-size: 12.5px;
+    font-weight: 700;
+    border-radius: 24px;
+    text-decoration: none !important;
+    transition: all 0.2s ease-in-out;
+    cursor: pointer;
+    border: 1px solid var(--sd-brand);
+    background-color: transparent;
+    color: var(--sd-brand);
+    width: auto;
+  }
+  .ln-btn-active:hover {
+    background-color: var(--sd-brand);
+    color: #FFFFFF;
+  }
+  .ln-btn-disabled {
+    background-color: #F3F3F3;
+    color: #999999;
+    border: 1px solid #E5E5E5;
+    cursor: not-allowed;
+  }
+  .ln-btn-sent {
+    background-color: var(--sd-brand-light);
+    color: var(--sd-brand);
+    border: 1px solid var(--sd-brand);
+    cursor: default;
+  }
+</style>
+
+<div class="sd-wrap">
+
+  <div class="sd-header">
+    <h2>Student Dashboard</h2>
+    <p>Track your mentorship requests and connect with alumni from across the network.</p>
+  </div>
+
+  <!-- ── Left-Aligned Stats Grid ── -->
+  <div class="sd-stats">
+    
+    <!-- 1. Requests Sent -->
+    <div class="sd-stat">
+      <div class="sd-stat-icon"><i class="fas fa-paper-plane"></i></div>
+      <div>
+        <p class="label">Requests Sent</p>
+        <p class="num">{{ total_sent_count|default:"0" }}</p>
+      </div>
+      <span class="sub-label">Total pending requests</span>
     </div>
+
+    <!-- 2. Pending Requests -->
+    <div class="sd-stat">
+      <div class="sd-stat-icon"><i class="fas fa-hourglass-half"></i></div>
+      <div>
+        <p class="label">Pending Requests</p>
+        <p class="num" style="color: var(--sd-amber);">{{ total_sent_count|default:"0" }}</p>
+      </div>
+      <span class="sub-label">Awaiting response</span>
+    </div>
+
+    <!-- 3. Mentorship Taken -->
+    <div class="sd-stat accent">
+      <div class="sd-stat-icon"><i class="fas fa-user-check"></i></div>
+      <div>
+        <p class="label">Mentorship Taken</p>
+        <p class="num">{% if accepted_request %}1{% else %}0{% endif %}</p>
+      </div>
+      <span class="sub-label">Active connections</span>
+    </div>
+
+    <!-- 4. Find-mentor CTA Card Slot -->
+    <div class="sd-cta">
+      <div>
+        <strong>Find a Mentor</strong>
+        <span>Browse alumni open to mentoring.</span>
+      </div>
+      <a href="{% url 'accounts:alumni_list' %}">Browse Network →</a>
+    </div>
+  </div>
+
+  <!-- ── Mentorship Requests preview ── -->
+  <div class="sd-section">
+    <div class="sd-section-top">
+      <h3 class="sd-section-title">Mentorship Requests</h3>
+      <a href="{% url 'accounts:my_requests' %}" class="sd-section-link">View all →</a>
+    </div>
+
+    <div class="sd-tabs">
+      <button type="button" class="sd-tab active" onclick="sdFilterRequests('all', this)">All</button>
+      <button type="button" class="sd-tab" onclick="sdFilterRequests('REJECTED', this)">Rejected</button>
+      <button type="button" class="sd-tab" onclick="sdFilterRequests('ACCEPTED', this)">Accepted</button>
+    </div>
+
+    <div class="sd-list" id="sdRequestList">
+      {% if accepted_request %}
+        <div class="sd-item" data-status="ACCEPTED">
+          {% if accepted_request.alumni.alumni_profile.profile_pic %}
+            <img class="sd-avatar" src="{{ accepted_request.alumni.alumni_profile.profile_pic.url }}" alt="">
+          {% else %}
+            <div class="sd-avatar">{{ accepted_request.alumni.username|slice:":2"|upper }}</div>
+          {% endif %}
+          <div class="sd-item-main">
+            <p class="sd-item-name">{{ accepted_request.alumni.get_full_name|default:accepted_request.alumni.username }}</p>
+            <p class="sd-item-sub">@{{ accepted_request.alumni.username }}</p>
+          </div>
+          <span class="sd-pill accepted">Accepted</span>
+        </div>
+      {% endif %}
+
+      {% for r in pending_requests %}
+        <div class="sd-item" data-status="PENDING">
+          {% if r.alumni.alumni_profile.profile_pic %}
+            <img class="sd-avatar" src="{{ r.alumni.alumni_profile.profile_pic.url }}" alt="">
+          {% else %}
+            <div class="sd-avatar">{{ r.alumni.username|slice:":2"|upper }}</div>
+          {% endif %}
+          <div class="sd-item-main">
+            <p class="sd-item-name">{{ r.alumni.get_full_name|default:r.alumni.username }}</p>
+            <p class="sd-item-sub">@{{ r.alumni.username }}</p>
+          </div>
+          <span class="sd-pill pending">Pending</span>
+        </div>
+      {% endfor %}
+
+      {% if not accepted_request and not pending_requests %}
+        <div class="sd-empty">
+          <i class="far fa-paper-plane"></i>
+          <p>You haven't any active mentorship requests tracker currently.</p>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- ── Search Alumni ── -->
+  <div class="sd-section" id="sd-search-alumni">
+    <div class="sd-section-top">
+      <h3 class="sd-section-title">Search Alumni</h3>
+      <a href="{% url 'accounts:alumni_list' %}" class="sd-section-link">See more →</a>
+    </div>
+
+    <div class="sd-feed-list" style="background: #FFFFFF; border: 1px solid var(--sd-border); border-radius: var(--sd-radius); overflow: hidden; box-shadow: var(--sd-shadow);">
+      {% for alumnus in suggested_alumni %}
+        <div class="sd-row" style="display: flex; padding: 24px; border-bottom: 1px solid var(--sd-border); gap: 16px; align-items: flex-start;">
+          
+          <div class="sd-row-avatar-wrapper" style="flex-shrink: 0;">
+            {% if alumnus.alumni_profile.profile_pic and alumnus.alumni_profile.profile_pic.url %}
+              <img src="{{ alumnus.alumni_profile.profile_pic.url }}" class="sd-row-avatar" alt="Profile Pic" style="width: 72px; height: 72px; border-radius: 50%; object-fit: cover; border: 1px solid var(--sd-border);">
+            {% else %}
+              <div class="sd-row-avatar-placeholder" style="width: 72px; height: 72px; border-radius: 50%; background-color: var(--sd-brand-light); color: var(--sd-brand); display: flex; align-items: center; justify-content: center; font-family: 'Sora', sans-serif; font-weight: 700; font-size: 22px; border: 1px solid var(--sd-border);">
+                {{ alumnus.username|slice:":2"|upper }}
+              </div>
+            {% endif %}
+          </div>
+
+          <div class="sd-row-body" style="flex-grow: 1;">
+            <div class="sd-row-name-line" style="display: flex; align-items: center; gap: 6px; margin-bottom: 3px;">
+              <span class="sd-row-name" style="font-family: 'DM Sans', sans-serif; font-weight: 700; font-size: 16px; color: var(--sd-text);">
+                {{ alumnus.get_full_name|default:alumnus.username }}
+              </span>
+            </div>
+
+            <p class="sd-row-headline" style="font-size: 14px; color: var(--sd-text); margin: 0 0 4px 0; line-height: 1.4;">
+              {% if alumnus.alumni_profile.job_title %}
+                {{ alumnus.alumni_profile.job_title }}{% if alumnus.alumni_profile.current_company %} at {{ alumnus.alumni_profile.current_company }}{% endif %}
+              {% else %}
+                {{ alumnus.alumni_profile.bio|default:"Alumni Mentor" }}
+              {% endif %}
+            </p>
+
+            <p class="sd-row-institution" style="font-size: 13px; color: var(--sd-muted); margin: 0 0 12px 0; display: inline-flex; align-items: center; gap: 5px;">
+              <i class="fas fa-university" style="font-size: 12px;"></i>
+              {{ alumnus.institution.name|default:"Global Network Partner" }}
+            </p>
+
+            <div class="sd-row-actions">
+              {% if alumnus.id in sent_requests %}
+                <span class="ln-action-btn ln-btn-sent"><i class="fas fa-check" style="margin-right: 4px;"></i> Request Sent</span>
+              {% elif total_sent_count >= 5 %}
+                <span class="ln-action-btn ln-btn-disabled">Send Request</span>
+              {% else %}
+                <a href="{% url 'accounts:send_request' alumnus.id %}" class="ln-action-btn ln-btn-active" onclick="alert('Mentorship request successfully sent to {{ alumnus.username }}!');">
+                  <i class="fas fa-paper-plane" style="font-size: 11px; margin-right: 4px;"></i> Send Request
+                </a>
+              {% endif %}
+            </div>
+          </div>
+
+        </div>
+      {% empty %}
+        <div class="sd-empty" style="text-align: center; padding: 40px 20px; color: var(--sd-muted); border: none; box-shadow: none;">
+          <i class="far fa-compass" style="font-size: 26px; color: var(--sd-border); display: block; margin-bottom: 8px;"></i>
+          <p style="margin: 0;">No global cross-institution alumni mentors are configured in the active directory right now.</p>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+
 </div>
 
+<!-- Filter Handling JS Wrapper Logic -->
+<script>
+function sdFilterRequests(status, btnElement) {
+  document.querySelectorAll('.sd-tab').forEach(el => el.classList.remove('active'));
+  btnElement.classList.add('active');
+
+  const items = document.querySelectorAll('#sdRequestList .sd-item');
+  items.forEach(item => {
+    if (status === 'all' || item.getAttribute('data-status') === status) {
+      item.style.display = 'flex';
+    } else {
+      item.style.display = 'none';
+    }
+  });
+}
+</script>
 {% endblock %}

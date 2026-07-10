@@ -3,6 +3,13 @@ from django.db import models
 from django.core.exceptions import ValidationError 
 from django.db.models import Q
 from django.utils import timezone
+import uuid
+import random
+import string
+from django.conf import settings
+
+
+
 
 class Institution(models.Model):
     name = models.CharField(max_length=200)
@@ -513,6 +520,8 @@ class Notification(models.Model):
         ('MENTORSHIP_REJECTED', 'Mentorship Rejected'),
         ('FACULTY_ANNOUNCEMENT', 'Faculty Announcement'),
         ('VERIFICATION_UPDATE', 'Verification Update'),
+        ('SESSION_SCHEDULED', 'Session Scheduled'),
+        ('SESSION_LIVE', 'Session Live'),
         ('GENERAL', 'General'),
     ]
 
@@ -535,3 +544,37 @@ class Notification(models.Model):
 
     def __str__(self):
         return f"{self.notification_type} → {self.recipient.username}"
+
+#-------------------------------------- sessions -------------------------------------------------
+def generate_session_code():
+    # Jaise abc-defg-hij hota hai, waise hi unique 9 letter code
+    chars = string.ascii_lowercase
+    part1 = ''.join(random.choice(chars) for _ in range(3))
+    part2 = ''.join(random.choice(chars) for _ in range(4))
+    part3 = ''.join(random.choice(chars) for _ in range(3))
+    return f"{part1}-{part2}-{part3}"
+
+class MentorshipSession(models.Model):
+    STATUS_CHOICES = [
+        ('SCHEDULED', 'Scheduled'),
+        ('ACTIVE', 'Active'),
+        ('COMPLETED', 'Completed'),
+        ('CANCELLED', 'Cancelled'),
+    ]
+
+    creator = models.ForeignKey(User, on_delete=models.CASCADE, related_name='created_sessions')
+    participant = models.ForeignKey(User, on_delete=models.CASCADE, related_name='joined_sessions')
+    session_code = models.CharField(max_length=15, unique=True, default=generate_session_code)
+    
+    date = models.DateField(null=True, blank=True)
+    timings = models.TimeField(null=True, blank=True)
+    
+    status = models.CharField(max_length=15, choices=STATUS_CHOICES, default='SCHEDULED')
+    
+    # NEW FIELDS: Active users count track karne ke liye
+    active_users_count = models.IntegerField(default=0)
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Session {self.session_code} ({self.status})"

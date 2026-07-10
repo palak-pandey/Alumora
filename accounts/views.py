@@ -6,7 +6,7 @@ from django.core.paginator import Paginator
 from .models import User, Institution, MentorshipRequest
 from django.shortcuts import get_object_or_404 
 from django.urls import reverse
-from .models import VerificationRequest, StudentProfile, AlumniProfile, FacultyProfile
+from .models import VerificationRequest, StudentProfile, AlumniProfile, FacultyProfile, MentorshipSession
 from .models import Conversation , Message
 from django.utils import timezone
 from .forms import StudentProfileForm, FacultyProfileForm,AlumniProfileForm,FacultyNotificationForm,VerificationRequestForm
@@ -15,6 +15,9 @@ from .notifications import notify
 from .models import User, Institution, MentorshipRequest, Notification
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.db.models import Q
+from django.db import models
+from datetime import datetime
+
 
 # ---------------------- LOGIN VIEW ----------------------
 def user_login(request):
@@ -36,7 +39,6 @@ def user_login(request):
 
             # Redirect based on role
             next_url = request.GET.get('next')
-
 
             # 1. Prioritize where the user was trying to go (?next=)
             next_url = request.GET.get('next')
@@ -74,6 +76,8 @@ def student_dashboard(request):
         return HttpResponseForbidden("Access denied. This dashboard is for students only.")
 
     student = request.user
+    
+    # 1. Mentorship Status Trackers
     accepted_request = MentorshipRequest.objects.filter(
         student=student,
         status='ACCEPTED'
@@ -84,42 +88,84 @@ def student_dashboard(request):
         status='PENDING'
     )
 
+    # 2. CROSS-INSTITUTION ALUMNI QUERY WITH 3 ITEMS LIMIT
+    suggested_alumni = User.objects.select_related(
+        "alumni_profile", "institution"
+    ).filter(
+        role="ALUMNI",
+        is_suspended=False,
+        is_verified=True,  # Taaki sirf verified professional profiles hi show ho
+        alumni_profile__mentorship_available=True
+    ).order_by('?')[:3]
+
+    # 3. 5-Request Limitation Budget Tracker for Action Buttons Synchronization
+    sent_requests_qs = MentorshipRequest.objects.filter(
+        student=student,
+        status="PENDING"
+    )
+    total_sent_count = sent_requests_qs.count()
+    sent_requests_ids = set(sent_requests_qs.values_list("alumni_id", flat=True))
+
     context = {
         'accepted_request': accepted_request,
-        'pending_requests': pending_requests
+        'pending_requests': pending_requests,
+        'suggested_alumni': suggested_alumni,       
+        'sent_requests': sent_requests_ids,         
+        'total_sent_count': total_sent_count,       
     }
 
     return render(request, 'dashboards/student_dashboard.html', context)
 
 
+@login_required(login_url='accounts:login') # Make sure user is logged in
 def alumni_dashboard(request):
-    user = request.user
+    if not request.user.is_authenticated or str(request.user.role).upper() != "ALUMNI":
+        return HttpResponseForbidden("Access denied. This dashboard is for alumni only.")
 
-    # Mentorship
-    mentorship_pending = MentorshipRequest.objects.filter(
-        alumni=user,
-        status='PENDING'
-    ).select_related('student')
+    alumni = request.user
 
-    mentorship_accepted = MentorshipRequest.objects.filter(
-        alumni=user,
-        status='ACCEPTED'
-    ).select_related('student')
+    # 1. Mentorship requests tracking context (Students who requested this alumnus)
+    incoming_requests = MentorshipRequest.objects.filter(alumni=alumni).select_related('student', 'student__student_profile')
+    
+    pending_requests = incoming_requests.filter(status='PENDING')
+    accepted_requests = incoming_requests.filter(status='ACCEPTED')
+    rejected_requests = incoming_requests.filter(status='REJECTED')
 
-    # Verification (this alumni's own request status/progress)
-    verification_requests = VerificationRequest.objects.filter(
-        user=user
-    ).select_related('user')
+    # 2. Verification request status tracking for banner alerts
+    verification_status = "NOT_SUBMITTED"
+    latest_verification = VerificationRequest.objects.filter(user=alumni).order_by('-created_at').first()
+    if latest_verification:
+        verification_status = latest_verification.status
+
+    # 3. Scheduled/active/completed sessions this alumni is part of
+    #    (as either the creator or the participant)
+    planned_sessions = MentorshipSession.objects.filter(
+        Q(creator=alumni) | Q(participant=alumni),
+        status='SCHEDULED'
+    ).select_related(
+        'creator', 'participant',
+        'creator__student_profile', 'creator__alumni_profile',
+        'participant__student_profile', 'participant__alumni_profile',
+    ).order_by('-created_at')
+
+    for s in planned_sessions:
+        other = s.participant if s.creator_id == alumni.id else s.creator
+        s.other_user = other
+        s.other_profile = getattr(other, 'student_profile', None) or getattr(other, 'alumni_profile', None)
 
     context = {
-        'mentorship_pending': mentorship_pending,
-        'mentorship_accepted': mentorship_accepted,
-        'verification_requests': verification_requests
+        'incoming_requests': incoming_requests, # FIX: Yeh missing tha jisse loop chal sake
+        'pending_requests': pending_requests,
+        'accepted_requests': accepted_requests,
+        'received_requests_count': incoming_requests.count(), # Top Card 1
+        'pending_requests_count': pending_requests.count(),   # Top Card 2
+        'active_mentees_count': accepted_requests.count(),    # Top Card 3
+        'verification_status': verification_status,
+        'latest_verification': latest_verification,
+        'planned_sessions': planned_sessions,
     }
 
     return render(request, 'dashboards/alumni_dashboard.html', context)
-
-#------------------------------------------------------------------------------------------------------------------------------------
 
 def faculty_dashboard(request):
     if not request.user.is_authenticated or request.user.role != "FACULTY":
@@ -165,69 +211,52 @@ def faculty_dashboard(request):
         "verification_requests": verification_requests,
         "stats": stats,
         "recently_verified": recently_verified,
-        "just_requests": just_requests,  # <--- Yeh line zaroor check kar lena!
+        "just_requests": just_requests,  
     })
-# ---------------------- ALUMNI LIST (STUDENTS ONLY) ----------------------
 
+# ---------------------- ALUMNI LIST (STUDENTS ONLY) ----------------------
+@login_required
 def alumni_list(request):
-    if not request.user.is_authenticated or request.user.role != "STUDENT":
+    if request.user.role != "STUDENT":
         return HttpResponseForbidden("Only students can view alumni.")
 
     if request.user.is_suspended:
         return HttpResponseForbidden("Your account is suspended.")
 
+    # Cross-institution view: pulls all active, verified alumni globally across the network
     available_alumni = User.objects.select_related(
         "alumni_profile", "institution"
     ).filter(
         role="ALUMNI",
         is_suspended=False,
+        is_verified=True,  
         alumni_profile__mentorship_available=True
-    )
+    ).order_by('username')
 
+    # Optional filter: Only triggers if student explicitly selects a specific college from a search dropdown
     institution_id = request.GET.get("institution")
     if institution_id and Institution.objects.filter(id=institution_id).exists():
         available_alumni = available_alumni.filter(institution_id=institution_id)
 
-    # Pagination
-    paginator = Paginator(available_alumni, 20)
-    page_number = request.GET.get("page")
-    page_obj = paginator.get_page(page_number)
-
-    
-    sent_requests = MentorshipRequest.objects.filter(
+    # 5-request limitation budget tracker calculation logic
+    sent_requests_qs = MentorshipRequest.objects.filter(
         student=request.user,
         status="PENDING"
-    ).values_list("alumni_id", flat=True)
+    )
+    total_sent_count = sent_requests_qs.count()
+    sent_requests_ids = set(sent_requests_qs.values_list("alumni_id", flat=True))
 
-    html = "<h2>Available Alumni:</h2><ul>"
+    context = {
+        "available_alumni": available_alumni, 
+        "sent_requests": sent_requests_ids,
+        "total_sent_count": total_sent_count,
+    }
 
-    sent_requests = set(sent_requests)
-
-
-    for alumni in page_obj:
-
-        if alumni.id in sent_requests:
-            action = "Request Sent"
-        else:
-            action = f"<a href='{reverse('accounts:send_request', args=[alumni.id])}'>Request Mentorship</a>"
-
-        html += f"""
-        <li>
-        {alumni.username} | {alumni.institution.name if alumni.institution else 'No Institution'}
-        {action}
-        </li>
-        """
-
-    html += "</ul>"
-    html += f"<br><a href='{reverse('accounts:student_dashboard')}'>Back</a> | <a href='{reverse('accounts:logout')}'>Logout</a>"
-
-    return HttpResponse(html)
+    return render(request, "mentorship/alumni_list.html", context)
 
 
-
-#send request 
+# ---------------------- MENTORSHIP ACTIONS ----------------------
 def send_request(request, alumni_id):
-
     if not request.user.is_authenticated or request.user.role != "STUDENT":
         return HttpResponseForbidden("Only students can send requests.")
 
@@ -239,7 +268,6 @@ def send_request(request, alumni_id):
     ).exists():
         messages.error(request, "You already have a mentor.")
         return redirect("accounts:alumni_list")
- 
 
     existing = MentorshipRequest.objects.filter(
         student=request.user,
@@ -250,7 +278,6 @@ def send_request(request, alumni_id):
     if existing:
         messages.warning(request, "Request already sent.")
         return redirect("accounts:alumni_list")
-    
     
     try:
         req = MentorshipRequest.objects.create(
@@ -272,48 +299,72 @@ def send_request(request, alumni_id):
     return redirect("accounts:alumni_list")
     
     
-    
-# My request 
 def my_requests(request):
-
     if not request.user.is_authenticated or request.user.role != "STUDENT":
         return HttpResponseForbidden("Access denied.")
 
-    mentorship_requests = MentorshipRequest.objects.filter(student=request.user)
+    all_requests = MentorshipRequest.objects.filter(
+        student=request.user
+    ).select_related('alumni', 'alumni__alumni_profile').order_by('-created_at')
 
-    html = "<h2>My Mentorship Requests</h2><ul>"
+    accepted_request = all_requests.filter(status="ACCEPTED").first()
+    pending_requests = all_requests.filter(status="PENDING")
+    past_requests = all_requests.exclude(status="PENDING").exclude(status="ACCEPTED")
 
-    for req in mentorship_requests :
-        if req.status == "ACCEPTED":
-            html += f"<li>{req.alumni.username} - ACCEPTED (Your Mentor)</li>"
+    mentor_skills = []
+    if accepted_request and hasattr(accepted_request.alumni, 'alumni_profile'):
+        skills_str = accepted_request.alumni.alumni_profile.skills
+        if skills_str:
+            mentor_skills = [s.strip() for s in skills_str.split(',') if s.strip()]
 
-        elif req.status == "REJECTED":
-            html += f"<li>{req.alumni.username} - REJECTED</li>"
-
-        else :
-            html += f"<li>{req.alumni.username} - PENDING</li>"
-
-    html += "</ul>"
-    html += f"<br><a href='{reverse('accounts:student_dashboard')}'>Back to Dashboard</a>"
-
-    return HttpResponse(html)    
-
-            
-
-
-#    return HttpResponse(html)
+    return render(request, "mentorship/your_mentor.html", {
+        "accepted_request": accepted_request,
+        "pending_requests": pending_requests,
+        "past_requests": past_requests,
+        "mentor_skills": mentor_skills,
+    })
 
 
-# Alumni incoming request.
+# ---------------------- YOUR MENTEES (ALUMNI ONLY) ----------------------
+@login_required(login_url='accounts:login')
+def your_mentees(request):
+    # Ensure only Alumni can view this dashboard target mapping
+    if str(request.user.role).upper() != "ALUMNI":
+        return HttpResponseForbidden("Access denied. This page is optimized for alumni accounts only.")
+
+    alumni = request.user
+
+    # Fetching all requests linked to this alumnus with ACCEPTED status or any completed tracking
+    # select_related avoids N+1 queries for profile rendering (Profile pic, bio, university)
+    mentees_queryset = MentorshipRequest.objects.filter(
+        alumni=alumni,
+        status__in=['ACCEPTED', 'COMPLETED']  # Handles both active and past/completed mentorship tracks
+    ).select_related(
+        'student', 
+        'student__student_profile',
+        'student__institution'
+    ).order_by('-created_at')
+
+    # Adding a clean runtime attribute to differentiate past records dynamically inside template
+    for relation in mentees_queryset:
+        relation.is_past_mentorship = (relation.status.upper() == 'COMPLETED')
+
+    context = {
+        'mentees': mentees_queryset,
+    }
+
+    
+    return render(request, 'mentorship/your_mentees.html', context)
+
+
+
 def alumni_requests(request):
-
     if not request.user.is_authenticated or request.user.role != "ALUMNI":
         return HttpResponseForbidden("Only alumni can view requests.")
 
     mentorship_requests = MentorshipRequest.objects.filter(alumni=request.user)
 
     html = "<h2>Incoming Requests</h2><ul>"
-
     for req in mentorship_requests:
         html += f"""
         <li>
@@ -328,13 +379,11 @@ def alumni_requests(request):
     return HttpResponse(html)
 
 
-# Alumni accept request.
 def accept_request(request, request_id):
-
     if not request.user.is_authenticated or request.user.role != "ALUMNI":
         return HttpResponseForbidden("Access denied.")
 
-    req = get_object_or_404(MentorshipRequest, id=request_id, alumni= request.user)
+    req = get_object_or_404(MentorshipRequest, id=request_id, alumni=request.user)
 
     if req.alumni != request.user:
         return HttpResponseForbidden("Not your request.")
@@ -342,9 +391,8 @@ def accept_request(request, request_id):
     if req.status != "PENDING":
         return HttpResponse("Request already processed.")
 
-    if MentorshipRequest.objects.filter( student = req.student, status = "ACCEPTED").exists():
+    if MentorshipRequest.objects.filter(student=req.student, status="ACCEPTED").exists():
         return HttpResponse("Student already has a mentor.")
-    
     
     req.status = "ACCEPTED"
     req.save()
@@ -358,7 +406,6 @@ def accept_request(request, request_id):
         link_url=reverse('accounts:my_requests'),
     )
 
-    # Capture who's about to get auto-rejected BEFORE the bulk update
     auto_rejected = MentorshipRequest.objects.filter(
         student=req.student, status="PENDING"
     ).exclude(id=req.id)
@@ -377,15 +424,11 @@ def accept_request(request, request_id):
     return redirect("accounts:alumni_requests")
 
 
-
-# Alumni reject requests.
 def reject_request(request, request_id):
-
     if not request.user.is_authenticated or request.user.role != "ALUMNI":
         return HttpResponseForbidden("Access denied.")
 
-    req = get_object_or_404(MentorshipRequest,id=request_id,alumni=request.user
-    )
+    req = get_object_or_404(MentorshipRequest, id=request_id, alumni=request.user)
 
     if req.alumni != request.user:
         return HttpResponseForbidden("Not your request.")
@@ -404,12 +447,10 @@ def reject_request(request, request_id):
         notification_type='MENTORSHIP_REJECTED',
      )
    
-   
-   
     return redirect("accounts:alumni_requests")
 
 
-#------------------------------ verification flow ------------------------------------------------------------------
+#------------------------------ VERIFICATION FLOW -----------------------------------------
 @login_required(login_url='accounts:login')
 def submit_verification_request(request):
     if request.user.role != "ALUMNI":
@@ -417,13 +458,12 @@ def submit_verification_request(request):
 
     if request.method == "POST":
         form = VerificationRequestForm(request.POST, request.FILES)
-        form.instance.user = request.user   # set BEFORE is_valid(), since clean() reads self.user
+        form.instance.user = request.user   
         if form.is_valid():
             v = form.save(commit=False)
             v.user = request.user
-            v.save()                   # this is what enforces "no duplicate pending request" for you
+            v.save()                   
 
-            # Notify every faculty member at this alumni's institution
             faculty_members = User.objects.filter(
                 role="FACULTY",
                 institution=request.user.institution
@@ -472,7 +512,6 @@ def faculty_approve(request, request_id):
     return redirect("accounts:faculty_dashboard")
 
 
-
 def faculty_reject(request, request_id):
     if request.user.role != "FACULTY":
         return HttpResponseForbidden("Only faculty allowed.")
@@ -497,9 +536,7 @@ def faculty_reject(request, request_id):
     return redirect("accounts:faculty_dashboard")
 
 
-
 def admin_approve(request, req_id):
-
     req = get_object_or_404(VerificationRequest, id=req_id)
 
     if request.user.role != "ADMIN":
@@ -525,34 +562,26 @@ def admin_approve(request, req_id):
     return redirect("admin:index")
 
 
-
-
-#-------------------------- chat view --------------------------------   
-
+#-------------------------- CHAT VIEWS --------------------------------   
 def inbox(request):
     conversations = Conversation.objects.filter(
         participants=request.user
     ).order_by('-updated_at')
 
-    # Search query capture kar rahe hain (Form ka name='q' ya 'search' ho sakta hai)
     query = request.GET.get('q', '').strip()
-    users = User.objects.none()  # Default empty queryset
+    users = User.objects.none()  
 
     if request.user.role == 'FACULTY':
         if query:
-            # Agar faculty search bar mein kuch type kare, toh username, first_name, ya last_name se search ho
             users = User.objects.filter(
                 Q(username__icontains=query) | 
                 Q(first_name__icontains=query) | 
                 Q(last_name__icontains=query),
                 institution=request.user.institution
-            ).exclude(id=request.user.id)[:10] # Top 10 results limit kiye hain taaki heavy load na ho
+            ).exclude(id=request.user.id)[:10] 
         else:
-            # Agar search query nahi hai, toh aap chahein toh empty rakh sakte hain ya saare users dikha sakte hain
-            # Abhi ke liye safe side saare users bhej rahe hain (bina filter ke)
             users = User.objects.filter(institution=request.user.institution).exclude(id=request.user.id)[:20]
     else:
-        # Student/Alumni ke liye purana system (sirf accepted/pending mentors search ya list honge)
         sent_requests = MentorshipRequest.objects.filter(
             student=request.user,
             status__in=['PENDING', 'ACCEPTED']
@@ -585,20 +614,17 @@ def inbox(request):
     return render(request, "chat/inbox.html", {
         "convo_data": convo_data,
         "users": users,
-        "query": query  # Template mein value="" fill rakhne ke liye
+        "query": query  
     })
+
 
 def chat_view(request, convo_id):
     convo = get_object_or_404(Conversation, id=convo_id, participants=request.user)
     chat_messages = convo.messages.all()
 
-    # Seen system
     chat_messages.filter(is_read=False).exclude(sender=request.user).update(is_read=True)
-
-    # Conversations for sidebar
     conversations = Conversation.objects.filter(participants=request.user).order_by('-updated_at')
 
-    # FEATURE: Agar chat mein koi bhi participant FACULTY hai, toh pending automatic False ho jayega
     has_faculty = convo.participants.filter(role='FACULTY').exists()
     is_pending = not convo.is_accepted if not has_faculty else False
 
@@ -612,8 +638,6 @@ def chat_view(request, convo_id):
 
 def send_message(request, convo_id):
     convo = get_object_or_404(Conversation, id=convo_id, participants=request.user)
-
-    # Faculty conversation ko ignore karega restriction check se
     has_faculty = convo.participants.filter(role='FACULTY').exists()
     
     if not convo.is_accepted and not has_faculty:
@@ -623,7 +647,6 @@ def send_message(request, convo_id):
         content = request.POST.get("content")
 
         if content and content.strip():
-            # 1. Message Create kijiye
             Message.objects.create(
                 conversation=convo,
                 sender=request.user,
@@ -633,34 +656,28 @@ def send_message(request, convo_id):
             convo.updated_at = timezone.now()
             convo.save()
 
-            # 2. Recipient nikalo jisko notify karna hai
             receiver = convo.participants.exclude(id=request.user.id).first()
 
             if receiver:
-                # Chat window ka proper url generator
                 chat_url = reverse("accounts:chat_view", kwargs={"convo_id": convo.id})
-                
-                # Sender ka display name taiyar karo
                 sender_name = request.user.get_full_name() or request.user.username
-                
-                # Content ka ek chota preview snippet notification text ke liye
                 msg_preview = content[:50] + "..." if len(content) > 50 else content
 
-                # Aapka exact notify helper function
                 notify(
                     recipient=receiver,
                     sender=request.user,
                     title=f"New Message from {sender_name}",
                     message=msg_preview,
-                    notification_type='FACULTY_ANNOUNCEMENT', # Aapke templates mein yeh already styled hai!
-                    link_url=chat_url # Notification click karte hi user seedhe chat par land karega
+                    notification_type='FACULTY_ANNOUNCEMENT', 
+                    link_url=chat_url 
                 )
 
     return redirect("accounts:chat_view", convo_id=convo.id)
+
+
 def start_chat(request, user_id):
     other_user = get_object_or_404(User, id=user_id)
 
-    # Strict Check: Faculty ya koi bhi user sirf apni university ke logon ko message kar sakta hai
     if request.user.institution != other_user.institution:
         return HttpResponseForbidden("You can only message members of your own institution.")
 
@@ -670,14 +687,12 @@ def start_chat(request, user_id):
         participants=other_user
     ).first()
 
-    # Mentorship check strictly students/alumni ke liye hai
     is_mentor = MentorshipRequest.objects.filter(
         student=request.user,
         alumni=other_user,
         status="ACCEPTED"
     ).exists()
 
-    # FEATURE: Agar message karne wala ya paane wala FACULTY hai, toh conversation dynamic auto-accept ho jayegi
     is_faculty_involved = (request.user.role == 'FACULTY' or other_user.role == 'FACULTY')
 
     if not convo:
@@ -686,7 +701,6 @@ def start_chat(request, user_id):
         )
         convo.participants.add(request.user, other_user)
     elif is_faculty_involved and not convo.is_accepted:
-        # Agar purani chat galti se blocked thi, toh use khol do
         convo.is_accepted = True
         convo.save()
 
@@ -707,41 +721,35 @@ def accept_message_request(request, convo_id):
 
     return redirect("accounts:chat_view", convo_id=convo.id)
 
-@login_required(login_url='accounts:login')  # Agar login nahi hai toh login page par bhejega
+
+# ---------------------- PROFILES ----------------------
+@login_required(login_url='accounts:login')  
 def view_profile(request):
     user = request.user
     role = None  
     profile_obj = None
 
-    # 1. Strict Role Detection (No assumptions, zero fallback)
     if hasattr(user, 'faculty_profile'):
         role = 'faculty'
         profile_obj = user.faculty_profile
-    
     elif hasattr(user, 'alumni_profile'):
         role = 'alumni'
         profile_obj = user.alumni_profile
-
     elif hasattr(user, 'student_profile'):
         role = 'student'
         profile_obj = user.student_profile
-        
     else:
-        # Agar Admin ya koi bina profile wala user profile dekhne aaye
         messages.error(request, "Sorry! You don't have a profile to view.")
         return redirect('accounts:login')    
     
-    # 2. Context taiyaar karo (Fixing the context_key bug)
     context = {
         "role": role,
-        "profile": profile_obj,  # Ek generic name jo har template mein kaam aaye
-        role: profile_obj        # Dynamic key (jaise 'student', 'faculty', ya 'alumni')
+        "profile": profile_obj,  
+        role: profile_obj        
     }
 
-    # 3. Dynamic Template Path
     template_name = "profiles/student_profile.html"
     return render(request, template_name, context)
-
 
 
 @login_required(login_url='accounts:login')
@@ -751,45 +759,36 @@ def edit_profile(request):
     profile_obj = None
     FormClass = None
 
-    # 1. Strict Role Detection
     if hasattr(user, 'faculty_profile'):
         role = 'faculty'
         profile_obj = user.faculty_profile
         FormClass = FacultyProfileForm
-    
     elif hasattr(user, 'alumni_profile'):
         role = 'alumni'
         profile_obj = user.alumni_profile
         FormClass = AlumniProfileForm
-        
     elif hasattr(user, 'student_profile'):
         role = 'student'
         profile_obj = user.student_profile
         FormClass = StudentProfileForm
-        
     else:
         messages.error(request, "Sorry! You don't have access to this page.")
         return redirect('accounts:login')
     
-    # 2. POST Request Handling (Data Save karne ke liye)
     if request.method == 'POST':
-        # Custom Manual Mapping: Direct HTML input names se data uthayenge
         profile_obj.bio = request.POST.get('bio', profile_obj.bio)
         profile_obj.about = request.POST.get('about', profile_obj.about)
         
-        # Files (Photos) Update Handle karne ke liye
         if request.FILES.get('profile_pic'):
             profile_obj.profile_pic = request.FILES.get('profile_pic')
         if request.FILES.get('cover_photo'):
             profile_obj.cover_photo = request.FILES.get('cover_photo')
 
-        # ─── STUDENT SPECIFIC FIELDS ───
         if role == 'student':
             profile_obj.department = request.POST.get('department', profile_obj.department)
             profile_obj.batch_year = request.POST.get('batch_year', profile_obj.batch_year)
             profile_obj.skills = request.POST.get('skills', getattr(profile_obj, 'skills', ''))
             
-        # ─── ALUMNI SPECIFIC FIELDS ───
         elif role == 'alumni':
             profile_obj.current_company = request.POST.get('current_company', profile_obj.current_company)
             profile_obj.job_title = request.POST.get('job_title', profile_obj.job_title)
@@ -802,14 +801,12 @@ def edit_profile(request):
             profile_obj.past_degree_course1 = request.POST.get('past_degree_course1', profile_obj.past_degree_course1)
             profile_obj.batch1 = request.POST.get('batch1', profile_obj.batch1)
 
-        # ─── FACULTY SPECIFIC FIELDS ───
         elif role == 'faculty':
             profile_obj.department = request.POST.get('department', profile_obj.department)
             profile_obj.current_designation = request.POST.get('current_designation', profile_obj.current_designation)
             profile_obj.current_join_year = request.POST.get('current_join_year', profile_obj.current_join_year)
             profile_obj.research_publications = request.POST.get('research_publications', profile_obj.research_publications)
 
-        # ─── COMMON PAST EXPERIENCES (Faculty & Alumni Ke Liye Exact Fields) ───
         if role in ['faculty', 'alumni']:
             profile_obj.past_company_1 = request.POST.get('past_company_1', profile_obj.past_company_1)
             profile_obj.past_designation_1 = request.POST.get('past_designation_1', profile_obj.past_designation_1)
@@ -819,24 +816,18 @@ def edit_profile(request):
             profile_obj.past_designation_2 = request.POST.get('past_designation_2', profile_obj.past_designation_2)
             profile_obj.past_timeline_2 = request.POST.get('past_timeline_2', profile_obj.past_timeline_2)
 
-        # Database me finalize save karo
         profile_obj.save()
         
-        # URL pattern ke safety wrapper ke sath view page par bhejo
         try:
             return redirect('view_profile')
         except:
             return redirect('accounts:view_profile')
             
-    # 3. GET Request Handling (Normal form layout render)
     else:
         form = FormClass(instance=profile_obj)
 
-    # 4. Context & Rendering
-    # 4. Context & Rendering (Safe Fallback Context)
     template_name = "profiles/edit_profile.html"
     
-    # Teeno ko explicitly None ya object de rahe hain taaki template crash na kare
     context = {
         'form': form,
         'role': role,
@@ -844,11 +835,12 @@ def edit_profile(request):
         'student': profile_obj if role == 'student' else None,
         'alumni': profile_obj if role == 'alumni' else None,
         'faculty': profile_obj if role == 'faculty' else None,
-        role: profile_obj  # dynamic key safe-keeping
+        role: profile_obj  
     }
 
     return render(request, template_name, context)
 
+# ---------------------- NOTIFICATIONS ----------------------
 def faculty_send_notification(request):
     if not request.user.is_authenticated or request.user.role != "FACULTY":
         return HttpResponseForbidden("Only faculty can send notifications.")
@@ -928,3 +920,157 @@ def faculty_verification_list(request):
         "just_requests": True, # <--- THIS FLAG IS THE GATEKEEPER
     }
     return render(request, "dashboards/faculty_dashboard.html", context)
+
+
+@login_required(login_url='accounts:login')
+def sessions_dashboard(request):
+    user = request.user
+    all_sessions = MentorshipSession.objects.filter(
+        Q(creator=user) | Q(participant=user)
+    ).order_by('-created_at')
+
+    if request.method == 'POST':
+        actiontype = request.POST.get('action_type')
+        
+        # 1. CANCEL SESSION ACTION
+        if actiontype == 'CANCEL':
+            session_id = request.POST.get('session_id')
+            session_to_cancel = get_object_or_404(MentorshipSession, id=session_id)
+            if user == session_to_cancel.creator or user == session_to_cancel.participant:
+                if session_to_cancel.status == 'SCHEDULED':
+                    session_to_cancel.status = 'CANCELLED'
+                    session_to_cancel.save()
+                    messages.success(request, "Session successfully cancelled.")
+                else:
+                    messages.error(request, "Sirf scheduled sessions ko cancel kiya ja sakta hai.")
+            return redirect('accounts:sessions_dashboard')
+
+        # 2. JOIN VIA ROOM CODE ACTION
+        if actiontype == 'JOIN_CODE':
+            entered_code = request.POST.get('room_code', '').strip()
+            session_obj = MentorshipSession.objects.filter(session_code=entered_code).first()
+            
+            if not session_obj:
+                messages.error(request, "Invalid Room Code.")
+                return redirect('accounts:sessions_dashboard')
+                
+            if user != session_obj.creator and user != session_obj.participant:
+                messages.error(request, "You are not authorized for this session.")
+                return redirect('accounts:sessions_dashboard')
+                
+            if session_obj.status in ['COMPLETED', 'CANCELLED']:
+                messages.error(request, "This session has already ended or been cancelled.")
+                return redirect('accounts:sessions_dashboard')
+                
+            # Date & Timing Check for Scheduled meets
+            if session_obj.status == 'SCHEDULED' and session_obj.date and session_obj.timings:
+                now = timezone.localtime(timezone.now())
+                session_datetime = datetime.combine(session_obj.date, session_obj.timings)
+                session_datetime = timezone.make_aware(session_datetime, timezone.get_current_timezone())
+                if now < session_datetime:
+                    messages.error(request, f"You cannot join yet. This session is scheduled for {session_obj.date} at {session_obj.timings}.")
+                    return redirect('accounts:sessions_dashboard')
+            
+            return redirect('accounts:session_room', room_code=session_obj.session_code)
+
+        # 3. SCHEDULE / IMMEDIATE SETUP
+        target_username = request.POST.get('target_username')
+        try:
+            target_user = User.objects.get(username=target_username)
+        except User.DoesNotExist:
+            messages.error(request, f"User '{target_username}' not found.")
+            return redirect('accounts:sessions_dashboard')
+
+        if target_user == user:
+            messages.error(request, "You cannot start a session with yourself.")
+            return redirect('accounts:sessions_dashboard')
+
+        session = MentorshipSession(creator=user, participant=target_user)
+
+        # English Notification Message Generation & Redirection targeting /notifications/
+        if actiontype == 'SCHEDULE':
+            session.date = request.POST.get('date')
+            session.timings = request.POST.get('timings')
+            session.status = 'SCHEDULED'
+            title_text = "New Scheduled Mentorship Session"
+            msg_text = f"Hello, user @{user.username} has scheduled a mentorship session with you on {session.date} at {session.timings}. Room Code: {session.session_code}."
+            notif_type = 'SESSION_SCHEDULED'
+            notif_link = reverse('accounts:notifications_list')
+        else:
+            session.status = 'ACTIVE'
+            title_text = "Live Mentorship Session Ongoing!"
+            msg_text = f"Attention! A live interactive session has been started by @{user.username}. Room Code: {session.session_code}."
+            notif_type = 'SESSION_LIVE'
+            notif_link = reverse('accounts:session_room', kwargs={'room_code': session.session_code})
+
+        session.save()
+
+        Notification.objects.create(
+            recipient=target_user,
+            sender=user,
+            title=title_text,
+            message=msg_text,
+            notification_type=notif_type,
+            link_url=notif_link,
+        )
+
+        if actiontype == 'IMMEDIATE':
+            return redirect('accounts:session_room', room_code=session.session_code)
+        
+        messages.success(request, f"Session created! Code: {session.session_code}")
+        return redirect('accounts:sessions_dashboard')
+
+    context = {'sessions': all_sessions}
+    return render(request, 'mentorship/sessions_dashboard.html', context)
+
+
+@login_required(login_url='accounts:login')
+def session_room(request, room_code):
+    session = get_object_or_404(MentorshipSession, session_code=room_code)
+    
+    if request.user != session.creator and request.user != session.participant:
+        return HttpResponseForbidden("Unauthorized member.")
+
+    if session.status in ['COMPLETED', 'CANCELLED']:
+        messages.error(request, "This session room is closed forever.")
+        return redirect('accounts:sessions_dashboard')
+
+    # Status activation on active entry
+    if session.status == 'SCHEDULED':
+        session.status = 'ACTIVE'
+
+    # User entered: increment active_users_count only once per browser
+    # session for this room (prevents refresh/reload from inflating the count)
+    session_flag_key = f'joined_session_{room_code}'
+    if not request.session.get(session_flag_key):
+        session.active_users_count += 1
+        request.session[session_flag_key] = True
+
+    session.save()
+
+    context = {
+        'session': session,
+        'room_code': room_code,
+    }
+    return render(request, 'mentorship/session_room.html', context)
+
+
+@login_required
+def leave_session_room(request, room_code):
+    session = get_object_or_404(MentorshipSession, session_code=room_code)
+
+    if session.status in ['COMPLETED', 'CANCELLED']:
+        return JsonResponse({'status': 'already_closed', 'current_status': session.status})
+
+    session_flag_key = f'joined_session_{room_code}'
+    if request.session.get(session_flag_key):
+        if session.active_users_count > 0:
+            session.active_users_count -= 1
+        del request.session[session_flag_key]
+
+    if session.active_users_count <= 0:
+        session.active_users_count = 0
+        session.status = 'COMPLETED'
+
+    session.save()
+    return JsonResponse({'status': 'left', 'current_status': session.status})

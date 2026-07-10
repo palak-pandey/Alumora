@@ -36,16 +36,12 @@ urlpatterns = [
     path('notifications/', views.notifications_list, name='notifications_list'),
     path('faculty/send-notification/', views.faculty_send_notification, name='faculty_send_notification'),
     path('verification/submit/', views.submit_verification_request, name='submit_verification_request'),
+    path('your-mentees/', views.your_mentees, name='your_mentees'),
 
-
-
-
-
-
-
-
+    path('sessions/', views.sessions_dashboard, name='sessions_dashboard'),
+    path('sessions/room/<str:room_code>/', views.session_room, name='session_room'),
+    path('sessions/leave/<str:room_code>/', views.leave_session_room, name='leave_session_room'),
 
 
 
 ]
-

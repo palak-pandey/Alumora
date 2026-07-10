@@ -1,0 +1,286 @@
+{% extends "layouts/base.html" %}
+{% block content %}
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=DM+Sans:wght@400;500&display=swap">
+
+<style>
+  :root {
+    --brand:       #0F6B3F;
+    --brand-light: #E7F3EC;
+    --brand-dark:  #0A4A2C;
+    --surface:     #F3F2EE;
+    --card-bg:     #FFFFFF;
+    --text-primary:#191919;
+    --text-muted:  #666666;
+    --border:      #E0DDD8;
+    --radius:      12px;
+    --shadow:      0 1px 3px rgba(0,0,0,.08), 0 0 0 1px rgba(0,0,0,.04);
+  }
+
+  .lp-notif-page {
+    font-family: 'DM Sans', sans-serif;
+    max-width: 700px;
+    margin: 0 auto;
+  }
+
+  .lp-page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+  .lp-page-title {
+    font-family: 'Sora', sans-serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+  }
+
+  .lp-card { background: var(--card-bg); border-radius: var(--radius); box-shadow: var(--shadow); margin-bottom: 12px; overflow: hidden; }
+  .lp-section { padding: 20px 24px; }
+  .lp-section-title { font-family: 'Sora', sans-serif; font-size: 16px; font-weight: 600; color: var(--text-primary); margin: 0 0 14px; }
+
+  .lp-notif-row {
+    display: flex;
+    gap: 14px;
+    padding: 16px 20px;
+    text-decoration: none !important;
+    border-bottom: 1px solid var(--border);
+    transition: background .15s;
+  }
+  .lp-notif-row:last-child { border-bottom: none; }
+  .lp-notif-row:hover { background: var(--surface); }
+  .lp-notif-row.unread { background: var(--brand-light); }
+  .lp-notif-row.not-clickable { cursor: default; }
+  .lp-notif-row.not-clickable:hover { background: inherit; }
+
+  .lp-notif-icon {
+    width: 40px; height: 40px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; font-size: 16px; color: #fff;
+  }
+
+  .lp-notif-body { flex: 1; min-width: 0; }
+  .lp-notif-top-row {
+    display: flex; align-items: baseline; justify-content: space-between; gap: 10px;
+  }
+  .lp-notif-title {
+    font-family: 'Sora', sans-serif;
+    font-size: 14.5px; font-weight: 600; color: var(--text-primary);
+    margin: 0;
+  }
+  .lp-notif-time { font-size: 12px; color: var(--text-muted); white-space: nowrap; flex-shrink: 0; }
+  .lp-notif-msg { font-size: 13.5px; color: var(--text-muted); margin: 4px 0 0; line-height: 1.5; }
+  .lp-notif-unread-dot {
+    display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+    background: var(--brand); margin-left: 8px; flex-shrink: 0;
+    align-self: center;
+  }
+
+  .lp-about-muted { color: var(--text-muted); font-style: italic; }
+  .lp-empty-state {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 48px 20px; text-align: center;
+  }
+  .lp-empty-icon {
+    width: 60px; height: 60px; border-radius: 50%;
+    background: var(--brand-light); color: var(--brand);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px; margin-bottom: 14px;
+  }
+</style>
+
+<div class="lp-notif-page">
+
+  <div class="lp-page-header">
+    <p class="lp-page-title">Notifications</p>
+  </div>
+
+  <div class="lp-card">
+    {% for n in notifications %}
+
+      {% if n.notification_type == 'MENTORSHIP_REQUEST' %}
+        {% with icon="fa-user-plus" icon_bg="#0F6B3F" %}
+          {% if n.link_url %}
+          <a href="{{ n.link_url }}" class="lp-notif-row{% if n.id in unread_ids %} unread{% endif %}">
+          {% else %}
+          <div class="lp-notif-row not-clickable{% if n.id in unread_ids %} unread{% endif %}">
+          {% endif %}
+            <span class="lp-notif-icon" style="background: {{ icon_bg }};"><i class="fas {{ icon }}"></i></span>
+            <span class="lp-notif-body">
+              <span class="lp-notif-top-row">
+                <span class="lp-notif-title">{{ n.title }}{% if n.id in unread_ids %}<span class="lp-notif-unread-dot"></span>{% endif %}</span>
+                <span class="lp-notif-time">{{ n.created_at|timesince }} ago</span>
+              </span>
+              <p class="lp-notif-msg">{{ n.message }}</p>
+            </span>
+          {% if n.link_url %}</a>{% else %}</div>{% endif %}
+        {% endwith %}
+
+      {% elif n.notification_type == 'MENTORSHIP_ACCEPTED' %}
+        {% with icon="fa-check-circle" icon_bg="#157347" %}
+          {% if n.link_url %}
+          <a href="{{ n.link_url }}" class="lp-notif-row{% if n.id in unread_ids %} unread{% endif %}">
+          {% else %}
+          <div class="lp-notif-row not-clickable{% if n.id in unread_ids %} unread{% endif %}">
+          {% endif %}
+            <span class="lp-notif-icon" style="background: {{ icon_bg }};"><i class="fas {{ icon }}"></i></span>
+            <span class="lp-notif-body">
+              <span class="lp-notif-top-row">
+                <span class="lp-notif-title">{{ n.title }}{% if n.id in unread_ids %}<span class="lp-notif-unread-dot"></span>{% endif %}</span>
+                <span class="lp-notif-time">{{ n.created_at|timesince }} ago</span>
+              </span>
+              <p class="lp-notif-msg">{{ n.message }}</p>
+            </span>
+          {% if n.link_url %}</a>{% else %}</div>{% endif %}
+        {% endwith %}
+
+      {% elif n.notification_type == 'MENTORSHIP_REJECTED' %}
+        {% with icon="fa-times-circle" icon_bg="#B3261E" %}
+          {% if n.link_url %}
+          <a href="{{ n.link_url }}" class="lp-notif-row{% if n.id in unread_ids %} unread{% endif %}">
+          {% else %}
+          <div class="lp-notif-row not-clickable{% if n.id in unread_ids %} unread{% endif %}">
+          {% endif %}
+            <span class="lp-notif-icon" style="background: {{ icon_bg }};"><i class="fas {{ icon }}"></i></span>
+            <span class="lp-notif-body">
+              <span class="lp-notif-top-row">
+                <span class="lp-notif-title">{{ n.title }}{% if n.id in unread_ids %}<span class="lp-notif-unread-dot"></span>{% endif %}</span>
+                <span class="lp-notif-time">{{ n.created_at|timesince }} ago</span>
+              </span>
+              <p class="lp-notif-msg">{{ n.message }}</p>
+            </span>
+          {% if n.link_url %}</a>{% else %}</div>{% endif %}
+        {% endwith %}
+
+      {% elif n.notification_type == 'FACULTY_ANNOUNCEMENT' %}
+        {% with icon="fa-bullhorn" icon_bg="#B7791F" %}
+          {% if n.link_url %}
+          <a href="{{ n.link_url }}" class="lp-notif-row{% if n.id in unread_ids %} unread{% endif %}">
+          {% else %}
+          <div class="lp-notif-row not-clickable{% if n.id in unread_ids %} unread{% endif %}">
+          {% endif %}
+            <span class="lp-notif-icon" style="background: {{ icon_bg }};"><i class="fas {{ icon }}"></i></span>
+            <span class="lp-notif-body">
+              <span class="lp-notif-top-row">
+                <span class="lp-notif-title">{{ n.title }}{% if n.id in unread_ids %}<span class="lp-notif-unread-dot"></span>{% endif %}</span>
+                <span class="lp-notif-time">{{ n.created_at|timesince }} ago</span>
+              </span>
+              <p class="lp-notif-msg">{{ n.message }}</p>
+            </span>
+          {% if n.link_url %}</a>{% else %}</div>{% endif %}
+        {% endwith %}
+
+      {% elif n.notification_type == 'VERIFICATION_UPDATE' %}
+        {% with icon="fa-shield-alt" icon_bg="#0F6B3F" %}
+          {% if n.link_url %}
+          <!-- FIXED: Yahan end mein parameter laga diya hai taaki view identify kar sake -->
+          <a href="{{ n.link_url }}?just_requests=true" class="lp-notif-row{% if n.id in unread_ids %} unread{% endif %}">
+          {% else %}
+          <div class="lp-notif-row not-clickable{% if n.id in unread_ids %} unread{% endif %}">
+          {% endif %}
+            <span class="lp-notif-icon" style="background: {{ icon_bg }};"><i class="fas {{ icon }}"></i></span>
+            <span class="lp-notif-body">
+              <span class="lp-notif-top-row">
+                <span class="lp-notif-title">{{ n.title }}{% if n.id in unread_ids %}<span class="lp-notif-unread-dot"></span>{% endif %}</span>
+                <span class="lp-notif-time">{{ n.created_at|timesince }} ago</span>
+              </span>
+              <p class="lp-notif-msg">{{ n.message }}</p>
+            </span>
+          {% if n.link_url %}</a>{% else %}</div>{% endif %}
+        {% endwith %}
+
+      {% elif n.notification_type == 'SESSION_SCHEDULED' %}
+        {% with icon="fa-calendar-alt" icon_bg="#0F6B3F" %}
+          <div class="lp-notif-row{% if n.id in unread_ids %} unread{% endif %}"
+               data-toggle="modal" data-target="#sessionNotifModal-{{ n.id }}"
+               style="cursor: pointer;">
+            <span class="lp-notif-icon" style="background: {{ icon_bg }};"><i class="fas {{ icon }}"></i></span>
+            <span class="lp-notif-body">
+              <span class="lp-notif-top-row">
+                <span class="lp-notif-title">{{ n.title }}{% if n.id in unread_ids %}<span class="lp-notif-unread-dot"></span>{% endif %}</span>
+                <span class="lp-notif-time">{{ n.created_at|timesince }} ago</span>
+              </span>
+              <p class="lp-notif-msg">{{ n.message }}</p>
+            </span>
+          </div>
+        {% endwith %}
+
+      {% elif n.notification_type == 'SESSION_LIVE' %}
+        {% with icon="fa-video" icon_bg="#B7791F" %}
+          <div class="lp-notif-row not-clickable{% if n.id in unread_ids %} unread{% endif %}" style="align-items: center;">
+            <span class="lp-notif-icon" style="background: {{ icon_bg }};"><i class="fas {{ icon }}"></i></span>
+            <span class="lp-notif-body">
+              <span class="lp-notif-top-row">
+                <span class="lp-notif-title">{{ n.title }}{% if n.id in unread_ids %}<span class="lp-notif-unread-dot"></span>{% endif %}</span>
+                <span class="lp-notif-time">{{ n.created_at|timesince }} ago</span>
+              </span>
+              <p class="lp-notif-msg">{{ n.message }}</p>
+            </span>
+            {% if n.link_url %}
+            <a href="{{ n.link_url }}" style="flex-shrink:0; background:#0F6B3F; color:#fff; padding:8px 16px; border-radius:20px; font-size:13px; font-weight:600; text-decoration:none; white-space:nowrap;">
+              <i class="fas fa-door-open"></i> Join Room
+            </a>
+            {% endif %}
+          </div>
+        {% endwith %}
+
+      {% else %}
+        {% with icon="fa-info-circle" icon_bg="#666666" %}
+          {% if n.link_url %}
+          <a href="{{ n.link_url }}" class="lp-notif-row{% if n.id in unread_ids %} unread{% endif %}">
+          {% else %}
+          <div class="lp-notif-row not-clickable{% if n.id in unread_ids %} unread{% endif %}">
+          {% endif %}
+            <span class="lp-notif-icon" style="background: {{ icon_bg }};"><i class="fas {{ icon }}"></i></span>
+            <span class="lp-notif-body">
+              <span class="lp-notif-top-row">
+                <span class="lp-notif-title">{{ n.title }}{% if n.id in unread_ids %}<span class="lp-notif-unread-dot"></span>{% endif %}</span>
+                <span class="lp-notif-time">{{ n.created_at|timesince }} ago</span>
+              </span>
+              <p class="lp-notif-msg">{{ n.message }}</p>
+            </span>
+          {% if n.link_url %}</a>{% else %}</div>{% endif %}
+        {% endwith %}
+      {% endif %}
+
+    {% empty %}
+      <div class="lp-empty-state">
+        <div class="lp-empty-icon"><i class="far fa-bell"></i></div>
+        <p class="lp-about-muted">No notifications yet</p>
+      </div>
+    {% endfor %}
+  </div>
+
+</div>
+
+<!-- Full-detail popups for scheduled-session notifications (kept outside the
+     card above since that container clips overflow) -->
+{% for n in notifications %}
+  {% if n.notification_type == 'SESSION_SCHEDULED' %}
+  <div class="modal fade" id="sessionNotifModal-{{ n.id }}" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+      <div class="modal-content" style="border-radius: 12px; border: none;">
+        <div class="modal-header" style="border-bottom: 1px solid #E0DDD8;">
+          <h5 class="modal-title" style="font-family: 'Sora', sans-serif; font-weight: 700; color: #191919; font-size: 17px;">
+            <i class="fas fa-calendar-alt" style="color:#0F6B3F; margin-right:8px;"></i>{{ n.title }}
+          </h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        </div>
+        <div class="modal-body">
+          <p style="font-size: 14.5px; color: #191919; line-height: 1.7; white-space: pre-wrap; user-select: text;">{{ n.message }}</p>
+          <p style="font-size: 12px; color: #666666; margin: 10px 0 0;">
+            {% if n.sender %}From @{{ n.sender.username }} &middot; {% endif %}{{ n.created_at|date:"d M Y, h:i A" }}
+          </p>
+        </div>
+        <div class="modal-footer" style="border-top: 1px solid #E0DDD8;">
+          <button type="button" class="btn btn-sm" data-dismiss="modal" style="background:#0F6B3F; color:#fff; border-radius:20px; padding:7px 18px; font-weight:600;">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+{% endfor %}
+
+{% endblock %}

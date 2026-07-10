@@ -1,147 +1,329 @@
-{% extends 'base.html' %}
+{% extends 'layouts/base.html' %}
 
 {% block content %}
+<style>
+  :root {
+    --sd-brand:       #0B3D2E;
+    --sd-brand-dark:  #062820;
+    --sd-brand-light: #E4F1EA;
+    --sd-card:        #FFFFFF;
+    --sd-text:        #14231C;
+    --sd-muted:       #5B6B62;
+    --sd-border:      #DCE6E0;
+    --sd-radius:      12px;
+    --sd-shadow:      0 1px 3px rgba(0,0,0,.08), 0 0 0 1px rgba(0,0,0,.03);
+    --sd-amber:       #B7791F;
+    --sd-amber-bg:    #FFF6E5;
+    --sd-danger:      #8C4A3F;
+    --sd-danger-bg:   #F6ECEA;
+    --sd-info:        #2B6CB0;
+    --sd-info-bg:     #EBF8FF;
+  }
 
-<h2>Alumni Dashboard </h2>
+  .sd-wrap { font-family: 'DM Sans', sans-serif; color: var(--sd-text); }
 
-<!-- ================= STATS ================= -->
-<div class="row">
-  <div class="col-md-4">
-    <div class="card bg-info">
-      <div class="card-body">
-        <h5>Pending Requests</h5>
-        <h3>{{ mentorship_pending.count }}</h3>
+  .sd-header { margin-bottom: 22px; }
+  .sd-header h2 { font-family: 'Sora', sans-serif; font-weight: 700; font-size: 24px; margin: 0 0 4px; }
+  .sd-header p { color: var(--sd-muted); font-size: 14px; margin: 0; }
+
+  /* ── 4 Top Cards Grid ── */
+  .sd-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 30px; }
+  .sd-stat {
+    background: var(--sd-card); border-radius: var(--sd-radius); box-shadow: var(--sd-shadow);
+    padding: 18px 20px; display: flex; flex-direction: column; align-items: flex-start; text-align: left; gap: 10px;
+  }
+  .sd-stat-icon {
+    width: 42px; height: 42px; border-radius: 50%; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center; font-size: 16px;
+    background: var(--sd-brand-light); color: var(--sd-brand);
+  }
+  .sd-stat.accent .sd-stat-icon { background: var(--sd-brand); color: #fff; }
+  .sd-stat .num { font-family: 'Sora', sans-serif; font-size: 24px; font-weight: 700; margin: 4px 0 0; line-height: 1.1; }
+  .sd-stat .label { font-size: 12px; color: var(--sd-muted); margin: 2px 0 0; }
+  .sd-stat .sub-label { font-size: 11px; color: var(--sd-muted); margin-top: 4px; font-weight: 500; }
+
+  /* Schedule Session CTA block */
+  .sd-cta {
+    background: var(--sd-brand); border-radius: var(--sd-radius); box-shadow: var(--sd-shadow);
+    padding: 18px 20px; color: #fff; display: flex; flex-direction: column; justify-content: space-between; align-items: flex-start; text-align: left;
+  }
+  .sd-cta strong { font-family: 'Sora', sans-serif; font-size: 15px; }
+  .sd-cta span { font-size: 12px; opacity: .85; margin-top: 2px; }
+  .sd-cta a {
+    margin-top: 12px; align-self: flex-start; background: #fff; color: var(--sd-brand);
+    border-radius: 20px; padding: 6px 16px; font-size: 12.5px; font-weight: 700; text-decoration: none;
+  }
+  .sd-cta a:hover { background: var(--sd-brand-light); color: var(--sd-brand-dark); }
+
+  @media (max-width: 900px) { .sd-stats { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 500px) { .sd-stats { grid-template-columns: 1fr; } }
+
+  .sd-section { margin-bottom: 36px; }
+  .sd-section-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; flex-wrap: wrap; gap: 10px; }
+  .sd-section-title { font-family: 'Sora', sans-serif; font-weight: 700; font-size: 18px; margin: 0; }
+  .sd-section-link { font-size: 12.5px; font-weight: 600; color: var(--sd-brand); text-decoration: none; }
+  .sd-section-link:hover { color: var(--sd-brand-dark); text-decoration: underline; }
+
+  /* ── Tabs ── */
+  .sd-tabs { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+  .sd-tab {
+    background: var(--sd-card); border: 1.5px solid var(--sd-border); color: var(--sd-muted);
+    padding: 7px 16px; border-radius: 20px; font-size: 13px; font-weight: 600; cursor: pointer;
+  }
+  .sd-tab:hover { border-color: var(--sd-brand); color: var(--sd-brand); }
+  .sd-tab.active { background: var(--sd-brand); border-color: var(--sd-brand); color: #fff; }
+
+  /* ── Mentorship request lists ── */
+  .sd-list { display: flex; flex-direction: column; gap: 10px; }
+  .sd-item {
+    background: var(--sd-card); border-radius: var(--sd-radius); box-shadow: var(--sd-shadow);
+    padding: 14px 18px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+  }
+  .sd-avatar {
+    width: 42px; height: 42px; border-radius: 50%; flex-shrink: 0; object-fit: cover;
+    background: var(--sd-brand-light); color: var(--sd-brand);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Sora', sans-serif; font-weight: 700; font-size: 14px;
+  }
+  .sd-item-main { flex: 1; min-width: 160px; }
+  .sd-item-name { font-weight: 600; font-size: 14px; margin: 0 0 2px 0; }
+  .sd-item-bio { font-size: 13px; color: var(--sd-text); margin: 0; line-height: 1.3; }
+  .sd-item-uni { font-size: 12px; color: var(--sd-muted); margin: 0; display: inline-flex; align-items: center; gap: 4px; }
+
+  /* Action Buttons for Requests */
+  .sd-action-wrap { display: flex; gap: 8px; }
+  .sd-btn-action {
+    padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 700; text-decoration: none !important; border: 1px solid transparent; cursor: pointer; transition: all 0.2s;
+  }
+  .sd-btn-accept { background: var(--sd-brand); color: #fff; }
+  .sd-btn-accept:hover { background: var(--sd-brand-dark); }
+  .sd-btn-reject { background: transparent; border-color: var(--sd-danger); color: var(--sd-danger); }
+  .sd-btn-reject:hover { background: var(--sd-danger-bg); }
+
+  .sd-pill {
+    display: inline-block; padding: 4px 12px; border-radius: 20px;
+    font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .03em;
+  }
+  .sd-pill.accepted { background: var(--sd-brand-light); color: var(--sd-brand); }
+  .sd-pill.rejected { background: var(--sd-danger-bg); color: var(--sd-danger); }
+
+  .sd-empty { text-align: center; padding: 40px 20px; color: var(--sd-muted); background: var(--sd-card); border-radius: var(--sd-radius); box-shadow: var(--sd-shadow); }
+  .sd-empty i { font-size: 26px; color: var(--sd-border); display: block; margin-bottom: 8px; }
+
+  /* ── Sessions Cards Status Pills ── */
+  .session-pill {
+    display: inline-flex; align-items: center; padding: 5px 14px; border-radius: 24px; font-size: 11.5px; font-weight: 700; text-transform: uppercase;
+  }
+  .session-pill.active { background: var(--sd-brand-light); color: var(--sd-brand); }
+  .session-pill.inactive { background: var(--sd-danger-bg); color: var(--sd-danger); }
+  .session-pill.completed { background: var(--sd-info-bg); color: var(--sd-info); }
+</style>
+
+<div class="sd-wrap">
+
+  <div class="sd-header">
+    <h2>Alumni Dashboard</h2>
+    <p>Manage incoming mentorship connection requests and view your upcoming scheduled interactions.</p>
+  </div>
+
+  <!-- ── 4 Top Cards Grid ── -->
+  <div class="sd-stats">
+    <!-- 1. Received Requests -->
+    <div class="sd-stat">
+      <div class="sd-stat-icon"><i class="fas fa-paper-plane"></i></div>
+      <div>
+        <p class="label">Received Requests</p>
+        <p class="num">{{ received_requests_count|default:"0" }}</p>
       </div>
+      <span class="sub-label">Total invites received</span>
+    </div>
+
+    <!-- 2. Pending Requests -->
+    <div class="sd-stat">
+      <div class="sd-stat-icon"><i class="fas fa-hourglass-half"></i></div>
+      <div>
+        <p class="label">Pending Requests</p>
+        <p class="num" style="color: var(--sd-amber);">{{ pending_requests_count|default:"0" }}</p>
+      </div>
+      <span class="sub-label">Awaiting your approval</span>
+    </div>
+
+    <!-- 3. Mentorships Taken -->
+    <div class="sd-stat accent">
+      <div class="sd-stat-icon"><i class="fas fa-user-check"></i></div>
+      <div>
+        <p class="label">Mentorships Taken</p>
+        <p class="num">{{ active_mentees_count|default:"0" }}</p>
+      </div>
+      <span class="sub-label">Active student connections</span>
+    </div>
+
+    <!-- 4. Schedule Session CTA -->
+    <div class="sd-cta">
+      <div>
+        <strong>Schedule Session</strong>
+        <span>Set up calendar availability for slots.</span>
+      </div>
+      <!-- Updated redirection path to sessions dashboard -->
+      <a href="{% url 'accounts:sessions_dashboard' %}">Set Timeline →</a>
     </div>
   </div>
-  <div class="col-md-4">
-    <div class="card bg-success">
-      <div class="card-body">
-        <h5>Students Mentoring</h5>
-        <h3>{{ mentorship_accepted.count }}</h3>
-      </div>
+
+  <!-- ── Mentorship Requests Section ── -->
+  <div class="sd-section">
+    <div class="sd-section-top">
+      <h3 class="sd-section-title">Mentorship Requests</h3>
+      <a href="#" class="sd-section-link">View all →</a>
+    </div>
+
+    <div class="sd-tabs">
+      <button type="button" class="sd-tab active" onclick="sdFilterRequests('PENDING', this)">Pending</button>
+      <button type="button" class="sd-tab" onclick="sdFilterRequests('ACCEPTED', this)">Accepted</button>
+      <button type="button" class="sd-tab" onclick="sdFilterRequests('REJECTED', this)">Rejected</button>
+    </div>
+
+    <div class="sd-list" id="sdRequestList">
+      {% for r in incoming_requests %}
+        <div class="sd-item" data-status="{{ r.status|upper }}">
+          {% if r.student.student_profile.profile_pic %}
+            <img class="sd-avatar" src="{{ r.student.student_profile.profile_pic.url }}" alt="">
+          {% else %}
+            <div class="sd-avatar">{{ r.student.username|slice:":2"|upper }}</div>
+          {% endif %}
+          
+          <div class="sd-item-main">
+            <!-- Student Title (Name or Username) -->
+            <p class="sd-item-name">{{ r.student.get_full_name|default:r.student.username }}</p>
+            <!-- Student Bio -->
+            <p class="sd-item-bio">{{ r.student.student_profile.bio|default:"Aspiring Student Explorer" }}</p>
+            <!-- Student University Name (No extra space) -->
+            <p class="sd-item-uni"><i class="fas fa-university" style="font-size: 11px;"></i> {{ r.student.institution.name|default:"Global Network Partner" }}</p>
+          </div>
+
+          <!-- Buttons/Statuses based on state -->
+          <div class="sd-action-block">
+            {% if r.status|upper == 'PENDING' %}
+              <div class="sd-action-wrap">
+                <a href="#" class="sd-btn-action sd-btn-reject">Reject</a>
+                <a href="#" class="sd-btn-action sd-btn-accept">Accept</a>
+              </div>
+            {% elif r.status|upper == 'ACCEPTED' %}
+              <span class="sd-pill accepted">Accepted</span>
+            {% elif r.status|upper == 'REJECTED' %}
+              <span class="sd-pill rejected">Rejected</span>
+            {% endif %}
+          </div>
+        </div>
+      {% empty %}
+        <div class="sd-empty">
+          <i class="far fa-envelope"></i>
+          <p>No student connection trackers available in this category.</p>
+        </div>
+      {% endfor %}
     </div>
   </div>
-  <div class="col-md-4">
-    <div class="card bg-warning">
-      <div class="card-body">
-        <h5>Verification Requests</h5>
-        <h3>{{ verification_requests.count }}</h3>
-      </div>
+
+  <!-- ── Sessions Section ── -->
+  <div class="sd-section" id="sd-alumni-sessions">
+    <div class="sd-section-top">
+      <h3 class="sd-section-title">Sessions</h3>
+      <a href="{% url 'accounts:sessions_dashboard' %}" class="sd-section-link">See more →</a>
+    </div>
+
+    <div class="sd-feed-list" style="background: #FFFFFF; border: 1px solid var(--sd-border); border-radius: var(--sd-radius); overflow: hidden; box-shadow: var(--sd-shadow);">
+      {% for session in planned_sessions %}
+        <div class="sd-row" style="display: flex; padding: 24px; border-bottom: 1px solid var(--sd-border); gap: 16px; align-items: flex-start;">
+
+          <div class="sd-row-avatar-wrapper" style="flex-shrink: 0;">
+            {% if session.other_profile.profile_pic %}
+              <img src="{{ session.other_profile.profile_pic.url }}" class="sd-row-avatar" alt="Profile Pic" style="width: 72px; height: 72px; border-radius: 50%; object-fit: cover; border: 1px solid var(--sd-border);">
+            {% else %}
+              <div class="sd-row-avatar-placeholder" style="width: 72px; height: 72px; border-radius: 50%; background-color: var(--sd-brand-light); color: var(--sd-brand); display: flex; align-items: center; justify-content: center; font-family: 'Sora', sans-serif; font-weight: 700; font-size: 22px; border: 1px solid var(--sd-border);">
+                {{ session.other_user.username|slice:":2"|upper }}
+              </div>
+            {% endif %}
+          </div>
+
+          <div class="sd-row-body" style="flex-grow: 1;">
+            <div class="sd-row-name-line" style="display: flex; align-items: center; gap: 6px; margin-bottom: 3px;">
+              <span class="sd-row-name" style="font-family: 'DM Sans', sans-serif; font-weight: 700; font-size: 16px; color: var(--sd-text);">
+                {{ session.other_user.get_full_name|default:session.other_user.username }}
+              </span>
+              <span style="font-size: 13px; color: var(--sd-muted);">@{{ session.other_user.username }}</span>
+            </div>
+
+            <p class="sd-row-headline" style="font-size: 14px; color: var(--sd-text); margin: 0 0 4px 0; line-height: 1.4;">
+              {{ session.other_profile.bio|default:"No bio added yet." }}
+            </p>
+
+            <p class="sd-row-institution" style="font-size: 13px; color: var(--sd-muted); margin: 0 0 12px 0; display: inline-flex; align-items: center; gap: 5px;">
+              <i class="fas fa-university" style="font-size: 12px;"></i>
+              {{ session.other_user.institution.name|default:"Global Network Partner" }}
+            </p>
+
+            <!-- Custom session timings details and state badges -->
+            <div class="sd-row-meta" style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; border-top: 1px dashed var(--sd-border); padding-top: 12px;">
+              <div style="font-size: 13.5px; color: var(--sd-text); font-weight: 500;">
+                <i class="far fa-clock" style="color: var(--sd-brand); margin-right: 4px;"></i>
+                <strong>Session:</strong>
+                {% if session.date %}{{ session.date|date:"M d, Y" }} at {{ session.timings|time:"h:i A" }}{% else %}Immediate session{% endif %}
+              </div>
+
+              <div>
+                {% if session.status == 'SCHEDULED' %}
+                  <span class="session-pill inactive" style="background-color: #FFF6E5; color: #B7791F;"><i class="fas fa-clock" style="font-size: 10px; margin-right: 5px;"></i> Scheduled</span>
+                {% elif session.status == 'ACTIVE' %}
+                  <span class="session-pill active"><i class="fas fa-circle" style="font-size: 7px; margin-right: 5px;"></i> Active</span>
+                {% elif session.status == 'CANCELLED' %}
+                  <span class="session-pill inactive"><i class="fas fa-times-circle" style="font-size: 10px; margin-right: 5px;"></i> Cancelled</span>
+                {% else %}
+                  <span class="session-pill completed"><i class="fas fa-check-circle" style="font-size: 10px; margin-right: 5px;"></i> Completed</span>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+
+        </div>
+      {% empty %}
+        <div class="sd-empty" style="text-align: center; padding: 40px 20px; color: var(--sd-muted); border: none; box-shadow: none;">
+          <i class="far fa-calendar-times" style="font-size: 26px; color: var(--sd-border); display: block; margin-bottom: 8px;"></i>
+          <p style="margin: 0;">No mentoring or advice sessions have been coordinated yet.</p>
+        </div>
+      {% endfor %}
     </div>
   </div>
+
 </div>
 
-<hr>
+<script>
+function sdFilterRequests(status, btnElement) {
+  document.querySelectorAll('.sd-tab').forEach(el => el.classList.remove('active'));
+  btnElement.classList.add('active');
 
-<!-- ================= MENTORSHIP ================= -->
-<h4>🎓 Your Students</h4>
-<div class="row">
-{% for req in mentorship_accepted %}
-  <div class="col-md-3">
-    <div class="card bg-success">
-      <div class="card-body">
-        <h5>{{ req.student.username }}</h5>
-        <p>Active Mentorship</p>
-      </div>
-    </div>
-  </div>
-{% empty %}
-  <p>No students yet</p>
-{% endfor %}
-</div>
+  const items = document.querySelectorAll('#sdRequestList .sd-item');
+  let shownCount = 0;
+  let totalMatch = 0;
 
-<hr>
+  items.forEach(item => {
+    if (item.getAttribute('data-status') === status) {
+      totalMatch++;
+      if (shownCount < 5) {
+        item.style.setProperty('display', 'flex', 'important');
+        shownCount++;
+      } else {
+        item.style.setProperty('display', 'none', 'important');
+      }
+    } else {
+      item.style.setProperty('display', 'none', 'important');
+    }
+  });
+}
 
-<h4>📩 Mentorship Requests</h4>
-<table class="table table-bordered">
-<tr>
-  <th>Student</th>
-  <th>Action</th>
-</tr>
-{% for req in mentorship_pending %}
-<tr>
-  <td>{{ req.student.username }}</td>
-  <td>
-    <a href="{% url 'accounts:accept_request' req.id %}" class="btn btn-success btn-sm">✔ Accept</a>
-    <a href="{% url 'accounts:reject_request' req.id %}" class="btn btn-danger btn-sm">✖ Reject</a>
-  </td>
-</tr>
-{% empty %}
-<tr>
-  <td colspan="2">No pending requests</td>
-</tr>
-{% endfor %}
-</table>
-
-<hr>
-
-<!-- ================= VERIFICATION REQUESTS ================= -->
-<h4> Verification Requests</h4>
-<table class="table table-bordered">
-<tr>
-  <th>User</th>
-  <th>Verification Progress</th>
-  <th>Status</th>
-</tr>
-
-{% for v in verification_requests %}
-<tr>
-  <td>{{ v.user.username }}</td>
-
-  <!-- PROGRESS BAR -->
-  <td style="width:50%;">
-    <div class="progress" style="height:30px;">
-
-      <!-- Faculty -->
-      <div class="progress-bar 
-      {% if v.status != 'PENDING' %}bg-info{% else %}bg-secondary{% endif %}" 
-      style="width:33%; text-align:center;">
-        Faculty {% if v.status != 'PENDING' %}✔{% endif %}
-      </div>
-
-      <!-- Admin -->
-      <div class="progress-bar 
-      {% if v.status == 'ADMIN_APPROVED' or v.status == 'VERIFIED' %}bg-primary{% else %}bg-secondary{% endif %}" 
-      style="width:33%; text-align:center;">
-        Admin {% if v.status == 'ADMIN_APPROVED' or v.status == 'VERIFIED' %}✔{% endif %}
-      </div>
-
-      <!-- Verified -->
-      <div class="progress-bar 
-      {% if v.status == 'VERIFIED' %}bg-success{% else %}bg-secondary{% endif %}" 
-      style="width:34%; text-align:center;">
-        Verified {% if v.status == 'VERIFIED' %}✅{% endif %}
-      </div>
-
-    </div>
-
-    {% if v.status == 'REJECTED' %}
-      <span class="badge bg-danger mt-1">Rejected ❌</span>
-    {% endif %}
-  </td>
-
-  <!-- STATUS COLUMN -->
-  <td>
-    {% if v.status == "PENDING" %}
-      <span class="badge bg-secondary">Pending</span>
-    {% elif v.status == "FACULTY_APPROVED" %}
-      <span class="badge bg-info">Faculty Approved</span>
-    {% elif v.status == "ADMIN_APPROVED" %}
-      <span class="badge bg-primary">Admin Approved</span>
-    {% elif v.status == "VERIFIED" %}
-      <span class="badge bg-success">Verified ✅</span>
-    {% elif v.status == "REJECTED" %}
-      <span class="badge bg-danger">Rejected</span>
-    {% endif %}
-  </td>
-
-</tr>
-{% empty %}
-<tr>
-  <td colspan="3">No verification requests</td>
-</tr>
-{% endfor %}
-</table>
-
+document.addEventListener("DOMContentLoaded", function() {
+  const activeTab = document.querySelector('.sd-tab.active');
+  if(activeTab) {
+    sdFilterRequests('PENDING', activeTab);
+  }
+});
+</script>
 {% endblock %}

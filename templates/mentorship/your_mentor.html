@@ -1,0 +1,232 @@
+{% extends 'layouts/base.html' %}
+
+{% block content %}
+
+<style>
+  :root {
+    --brand:       #0B3D2E;
+    --brand-light: #E4F1EA;
+    --brand-dark:  #062820;
+    --surface:     #F3F2EE;
+    --card-bg:     #FFFFFF;
+    --text-primary:#191919;
+    --text-muted:  #666666;
+    --border:      #E0DDD8;
+    --radius:      12px;
+    --shadow:      0 1px 3px rgba(0,0,0,.08), 0 0 0 1px rgba(0,0,0,.04);
+    --amber:       #B7791F;
+    --amber-bg:    #FFF6E5;
+    --danger:      #B3261E;
+    --danger-bg:   #FDECEA;
+  }
+
+  .ym-wrap { font-family: 'DM Sans', sans-serif; color: var(--text-primary); max-width: 900px; margin: 0 auto; }
+
+  .ym-header { margin-bottom: 22px; }
+  .ym-header h2 { font-family: 'Sora', sans-serif; font-weight: 700; font-size: 24px; margin: 0 0 4px; }
+  .ym-header p { color: var(--text-muted); font-size: 14px; margin: 0; }
+
+  /* ── Mentor hero card (when assigned) ── */
+  .ym-mentor-card {
+    background: var(--card-bg); border-radius: var(--radius); box-shadow: var(--shadow);
+    padding: 28px; margin-bottom: 24px;
+  }
+  .ym-mentor-top { display: flex; gap: 20px; align-items: flex-start; flex-wrap: wrap; }
+  .ym-avatar {
+    width: 84px; height: 84px; border-radius: 50%; object-fit: cover; flex-shrink: 0;
+    border: 3px solid var(--brand-light);
+  }
+  .ym-mentor-info { flex: 1; min-width: 200px; }
+  .ym-mentor-name { font-family: 'Sora', sans-serif; font-weight: 700; font-size: 20px; margin: 0 0 4px; }
+  .ym-mentor-role { font-size: 14.5px; color: var(--text-muted); margin: 0 0 2px; }
+  .ym-mentor-batch { font-size: 13px; color: var(--brand); font-weight: 600; margin: 6px 0 0; }
+
+  .ym-connected-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--brand-light); color: var(--brand);
+    padding: 6px 14px; border-radius: 20px; font-size: 12.5px; font-weight: 700;
+    white-space: nowrap;
+  }
+
+  .ym-mentor-bio {
+    margin: 18px 0 0; font-size: 14.5px; line-height: 1.6; color: var(--text-primary);
+  }
+
+  .ym-skills { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0 0; }
+  .ym-skill-pill {
+    background: var(--surface); border: 1px solid var(--border); color: var(--text-primary);
+    padding: 5px 13px; border-radius: 20px; font-size: 12.5px; font-weight: 500;
+  }
+
+  .ym-mentor-actions { display: flex; gap: 10px; margin-top: 22px; flex-wrap: wrap; }
+  .ym-btn {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 10px 22px; border-radius: 20px; font-size: 14px; font-weight: 600;
+    border: none; cursor: pointer; text-decoration: none; transition: background .2s, transform .1s;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .ym-btn-primary { background: var(--brand); color: #fff; }
+  .ym-btn-primary:hover { background: var(--brand-dark); color: #fff; transform: translateY(-1px); }
+  .ym-btn-outline { background: #fff; border: 1.5px solid var(--border); color: var(--text-primary); }
+  .ym-btn-outline:hover { border-color: var(--brand); color: var(--brand); }
+
+  /* ── Empty state (no mentor yet) ── */
+  .ym-empty-card {
+    background: var(--card-bg); border-radius: var(--radius); box-shadow: var(--shadow);
+    padding: 44px 24px; text-align: center; margin-bottom: 24px;
+  }
+  .ym-empty-icon {
+    width: 64px; height: 64px; border-radius: 50%; margin: 0 auto 16px;
+    background: var(--brand-light); color: var(--brand);
+    display: flex; align-items: center; justify-content: center; font-size: 26px;
+  }
+  .ym-empty-title { font-family: 'Sora', sans-serif; font-weight: 700; font-size: 17px; margin: 0 0 6px; }
+  .ym-empty-sub { font-size: 14px; color: var(--text-muted); margin: 0 0 20px; }
+
+  /* ── Section titles ── */
+  .ym-section-title {
+    font-family: 'Sora', sans-serif; font-weight: 700; font-size: 16px; margin: 0 0 14px;
+  }
+
+  /* ── Pending / past request list ── */
+  .ym-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 24px; }
+  .ym-req-card {
+    background: var(--card-bg); border-radius: var(--radius); box-shadow: var(--shadow);
+    padding: 14px 18px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+  }
+  .ym-req-avatar { width: 42px; height: 42px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
+  .ym-req-main { flex: 1; min-width: 160px; }
+  .ym-req-name { font-weight: 600; font-size: 14.5px; margin: 0; }
+  .ym-req-sub { font-size: 12.5px; color: var(--text-muted); margin: 2px 0 0; }
+  .ym-req-time { font-size: 11.5px; color: var(--text-muted); white-space: nowrap; }
+
+  .ym-pill {
+    display: inline-block; padding: 4px 12px; border-radius: 20px;
+    font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .03em;
+    white-space: nowrap;
+  }
+  .ym-pill.pending  { background: var(--amber-bg); color: var(--amber); }
+  .ym-pill.rejected { background: var(--danger-bg); color: var(--danger); }
+
+  details.ym-past { margin-bottom: 24px; }
+  details.ym-past summary {
+    cursor: pointer; font-family: 'Sora', sans-serif; font-weight: 700; font-size: 14.5px;
+    color: var(--text-muted); list-style: none; display: flex; align-items: center; gap: 6px;
+  }
+  details.ym-past summary::-webkit-details-marker { display: none; }
+  details.ym-past summary::before { content: "▸"; transition: transform .15s ease; }
+  details.ym-past[open] summary::before { transform: rotate(90deg); }
+  details.ym-past .ym-list { margin-top: 12px; }
+</style>
+
+<div class="ym-wrap">
+
+  <div class="ym-header">
+    <h2>Your Mentor</h2>
+    <p>Track your mentorship journey with alumni from your institution.</p>
+  </div>
+
+  {% if accepted_request %}
+    <!-- ── Assigned mentor ── -->
+    <div class="ym-mentor-card">
+      <div class="ym-mentor-top">
+        <img class="ym-avatar"
+             src="https://ui-avatars.com/api/?name={{ accepted_request.alumni.get_full_name|urlencode|default:accepted_request.alumni.username }}&background=0B3D2E&color=ffffff&size=128"
+             alt="{{ accepted_request.alumni.get_full_name|default:accepted_request.alumni.username }}">
+
+        <div class="ym-mentor-info">
+          <p class="ym-mentor-name">{{ accepted_request.alumni.get_full_name|default:accepted_request.alumni.username }}</p>
+          {% with profile=accepted_request.alumni.alumni_profile %}
+            {% if profile.job_title or profile.current_company %}
+              <p class="ym-mentor-role">
+                {{ profile.job_title|default:"" }}{% if profile.job_title and profile.current_company %} at {% endif %}{{ profile.current_company|default:"" }}
+              </p>
+            {% endif %}
+            {% if profile.batch or profile.recent_degree %}
+              <p class="ym-mentor-batch">
+                {{ profile.recent_degree|default:"Alumni" }}{% if profile.batch %} · Batch {{ profile.batch }}{% endif %}
+              </p>
+            {% endif %}
+          {% endwith %}
+        </div>
+
+        <span class="ym-connected-badge"><i class="fas fa-check-circle"></i> Connected since {{ accepted_request.created_at|date:"d M Y" }}</span>
+      </div>
+
+      {% with profile=accepted_request.alumni.alumni_profile %}
+        {% if profile.bio %}
+          <p class="ym-mentor-bio">{{ profile.bio }}</p>
+        {% endif %}
+
+        {% if mentor_skills %}
+          <div class="ym-skills">
+            {% for skill in mentor_skills %}
+              <span class="ym-skill-pill">{{ skill }}</span>
+            {% endfor %}
+          </div>
+        {% endif %}
+      {% endwith %}
+
+      <div class="ym-mentor-actions">
+        <a href="{% url 'accounts:start_chat' accepted_request.alumni.id %}" class="ym-btn ym-btn-primary">
+          <i class="fas fa-paper-plane"></i> Message Mentor
+        </a>
+      </div>
+    </div>
+
+  {% else %}
+    <!-- ── No mentor yet ── -->
+    <div class="ym-empty-card">
+      <div class="ym-empty-icon"><i class="fas fa-user-friends"></i></div>
+      <p class="ym-empty-title">You don't have a mentor yet</p>
+      <p class="ym-empty-sub">Browse verified alumni from your institution and send a mentorship request to get started.</p>
+      <a href="{% url 'accounts:alumni_list' %}" class="ym-btn ym-btn-primary">
+        <i class="fas fa-search"></i> Browse Alumni
+      </a>
+    </div>
+  {% endif %}
+
+  {% if pending_requests %}
+    <p class="ym-section-title">Pending requests</p>
+    <div class="ym-list">
+      {% for req in pending_requests %}
+        <div class="ym-req-card">
+          <img class="ym-req-avatar"
+               src="https://ui-avatars.com/api/?name={{ req.alumni.get_full_name|urlencode|default:req.alumni.username }}&background=0B3D2E&color=ffffff&size=84"
+               alt="{{ req.alumni.get_full_name|default:req.alumni.username }}">
+          <div class="ym-req-main">
+            <p class="ym-req-name">{{ req.alumni.get_full_name|default:req.alumni.username }}</p>
+            {% with profile=req.alumni.alumni_profile %}
+              <p class="ym-req-sub">{{ profile.job_title|default:"" }}{% if profile.job_title and profile.current_company %} at {% endif %}{{ profile.current_company|default:"" }}</p>
+            {% endwith %}
+          </div>
+          <span class="ym-req-time">Sent {{ req.created_at|timesince }} ago</span>
+          <span class="ym-pill pending">Pending</span>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  {% if past_requests %}
+    <details class="ym-past">
+      <summary>Past requests ({{ past_requests|length }})</summary>
+      <div class="ym-list">
+        {% for req in past_requests %}
+          <div class="ym-req-card">
+            <img class="ym-req-avatar"
+                 src="https://ui-avatars.com/api/?name={{ req.alumni.get_full_name|urlencode|default:req.alumni.username }}&background=999999&color=ffffff&size=84"
+                 alt="{{ req.alumni.get_full_name|default:req.alumni.username }}">
+            <div class="ym-req-main">
+              <p class="ym-req-name">{{ req.alumni.get_full_name|default:req.alumni.username }}</p>
+              <p class="ym-req-sub">{{ req.created_at|date:"d M Y" }}</p>
+            </div>
+            <span class="ym-pill rejected">{{ req.get_status_display }}</span>
+          </div>
+        {% endfor %}
+      </div>
+    </details>
+  {% endif %}
+
+</div>
+
+{% endblock %}

@@ -181,7 +181,7 @@
                     {% for n in recent_notifications %}
                         {% if n.notification_type == 'MENTORSHIP_REQUEST' %}
                             {% with icon="fa-user-plus" icon_bg="#0F6B3F" %}
-                            <a href="{% if n.link_url %}{{ n.link_url }}{% else %}{% url 'accounts:notifications_list' %}{% endif %}" class="lp-notif-item{% if not n.is_read %} unread{% endif %}">
+                            <a href="{% if n.link_url %}{{ n.link_url }}{% else %}{% url 'accounts:notifications_list' %}\n{% endif %}" class="lp-notif-item{% if not n.is_read %} unread{% endif %}">
                                 <span class="lp-notif-icon" style="background: {{ icon_bg }};"><i class="fas {{ icon }}"></i></span>
                                 <span class="lp-notif-body">
                                     <span class="lp-notif-title">{{ n.title }}</span>
@@ -294,11 +294,11 @@
                     <!-- Dashboard -->
                     <li class="nav-item">
                         {% if request.user.role == 'FACULTY' or request.user.role|upper == 'FACULTY' %}
-                            <a href="{% url 'accounts:faculty_dashboard' %}" class="nav-link active">
+                            <a href="{% url 'accounts:faculty_dashboard' %}" class="nav-link">
                         {% elif request.user.role == 'ALUMNI' or request.user.role|upper == 'ALUMNI' %}
-                            <a href="{% url 'accounts:alumni_dashboard' %}" class="nav-link active">
+                            <a href="{% url 'accounts:alumni_dashboard' %}" class="nav-link">
                         {% else %}
-                            <a href="{% url 'accounts:student_dashboard' %}" class="nav-link active">
+                            <a href="{% url 'accounts:student_dashboard' %}" class="nav-link">
                         {% endif %}
                             <i class="nav-icon fas fa-tachometer-alt"></i>
                             <p>Dashboard</p>
@@ -329,12 +329,31 @@
                         </a>
                     </li>
 
-                    <!-- Your Mentors (Only visible to non-faculty users) -->
+                    <!-- Sessions (Visible ONLY to Students and Alumni, Hidden for Faculty) -->
                     {% if request.user.role|upper != 'FACULTY' %}
                     <li class="nav-item">
-                        <a href="#" class="nav-link">
+                        <!-- UPDATED: Pointed to sessions_dashboard -->
+                        <a href="{% url 'accounts:sessions_dashboard' %}" class="nav-link">
+                            <i class="nav-icon fas fa-calendar-alt"></i>
+                            <p>Sessions</p>
+                        </a>
+                    </li>
+                    {% endif %}
+
+                    <!-- Your Mentors / Your Mentees (Only visible to non-faculty users) -->
+                    {% if request.user.role|upper == 'STUDENT' %}
+                    <li class="nav-item">
+                        <a href="{% url 'accounts:my_requests' %}" class="nav-link">
                             <i class="nav-icon fas fa-users"></i>
-                            <p>Your Mentors</p>
+                            <p>Your Mentor</p>
+                        </a>
+                    </li>
+                    {% elif request.user.role|upper == 'ALUMNI' %}
+                    <li class="nav-item">
+                        <!-- UPDATED: Pointed directly to your new your_mentees view -->
+                        <a href="{% url 'accounts:your_mentees' %}" class="nav-link">
+                            <i class="nav-icon fas fa-users"></i>
+                            <p>Your Mentees</p>
                         </a>
                     </li>
                     {% endif %}
@@ -386,6 +405,23 @@
 <script src="{% static 'plugins/jquery/jquery.min.js' %}"></script>
 <script src="{% static 'plugins/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
 <script src="{% static 'dist/js/adminlte.js' %}"></script>
+
+<!-- Automatic Active Sidebar Link State Evaluator -->
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+    const currentUrl = window.location.pathname;
+    const navLinks = document.querySelectorAll('.nav-sidebar .nav-link');
+    
+    navLinks.forEach(link => {
+      const linkPath = link.getAttribute('href');
+      if (linkPath && linkPath !== '#' && currentUrl.includes(linkPath)) {
+        // Remove hardcoded active class from defaults, apply to the matching link
+        document.querySelectorAll('.nav-sidebar .nav-link').forEach(el => el.classList.remove('active'));
+        link.classList.add('active');
+      }
+    });
+  });
+</script>
 
 </body>
 </html>

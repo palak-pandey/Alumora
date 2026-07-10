@@ -1,0 +1,295 @@
+{% extends 'layouts/base.html' %}
+
+{% block content %}
+<!-- Google Fonts & FontAwesome -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700&family=DM+Sans:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<style>
+  :root {
+    --forest-green: #0A2E22;
+    --forest-hover: #103B2B;
+    --forest-light: #E6F0EC;
+    --text-main: #191919;
+    --text-muted: #666666;
+    --border-color: #E8E6E2;
+    --radius-btn: 24px;
+  }
+
+  .ln-container {
+    font-family: 'DM Sans', sans-serif;
+    max-width: 850px;
+    margin: 20px auto;
+    padding: 0 20px;
+  }
+
+  /* Navigation Link Styling */
+  .ln-back-nav {
+    margin-bottom: 14px;
+  }
+  .ln-back-link {
+    text-decoration: none !important;
+    color: var(--forest-green);
+    font-weight: 600;
+    font-size: 14px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: color 0.2s ease;
+  }
+  .ln-back-link:hover {
+    color: var(--forest-hover);
+  }
+
+  .ln-header {
+    margin-bottom: 24px;
+  }
+  .ln-header h2 {
+    font-family: 'Sora', sans-serif;
+    font-weight: 700;
+    font-size: 24px;
+    color: var(--forest-green);
+    margin: 0;
+  }
+
+  /* Limit Alert Banner */
+  .ln-alert-banner {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background-color: #FDF2F2;
+    border: 1px solid #F8B4B4;
+    color: #9B1C1C;
+    padding: 14px 20px;
+    border-radius: 8px;
+    margin-bottom: 24px;
+    font-size: 14px;
+    font-weight: 500;
+  }
+
+  /* Main Row Layout System */
+  .ln-feed {
+    background: #FFFFFF;
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+
+  /* Single row structure */
+  .ln-row {
+    display: flex;
+    padding: 24px 24px;
+    border-bottom: 1px solid var(--border-color);
+    gap: 16px;
+    align-items: flex-start;
+  }
+  .ln-row:last-child {
+    border-bottom: none;
+  }
+
+  /* Left Side: Circular Avatars */
+  .ln-avatar-wrapper {
+    flex-shrink: 0;
+  }
+  .ln-avatar {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 1px solid var(--border-color);
+  }
+  .ln-avatar-placeholder {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    background-color: var(--forest-light);
+    color: var(--forest-green);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Sora', sans-serif;
+    font-weight: 700;
+    font-size: 22px;
+    border: 1px solid var(--border-color);
+  }
+
+  /* Center: Core Text Block */
+  .ln-body {
+    flex-grow: 1;
+  }
+  
+  .ln-meta-line {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 3px;
+  }
+  .ln-name {
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 700;
+    font-size: 16px;
+    color: var(--text-main);
+    margin: 0;
+    text-decoration: none;
+  }
+  .ln-name:hover {
+    color: var(--forest-green);
+    text-decoration: underline;
+  }
+
+  /* Job Description Headline */
+  .ln-headline {
+    font-size: 14px;
+    color: var(--text-main);
+    line-height: 1.4;
+    margin: 0 0 4px 0;
+  }
+  
+  /* Sub-line text elements */
+  .ln-subtext {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin: 0 0 12px 0;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  /* Pill Buttons - Forest Green Theme */
+  .ln-action-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 18px;
+    font-size: 14px;
+    font-weight: 700;
+    border-radius: var(--radius-btn);
+    text-decoration: none !important;
+    transition: all 0.2s ease-in-out;
+    cursor: pointer;
+    border: 1px solid var(--forest-green);
+    background-color: transparent;
+    color: var(--forest-green);
+  }
+  .ln-btn-active:hover {
+    background-color: var(--forest-green);
+    color: #FFFFFF;
+  }
+  
+  .ln-btn-disabled {
+    background-color: #F3F3F3;
+    color: #999999;
+    border: 1px solid #E5E5E5;
+    cursor: not-allowed;
+  }
+  .ln-btn-sent {
+    background-color: var(--forest-light);
+    color: var(--forest-green);
+    border: 1px solid var(--forest-green);
+    cursor: default;
+  }
+
+  .ln-empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text-muted);
+  }
+  .ln-empty-state i {
+    font-size: 40px;
+    color: var(--border-color);
+    margin-bottom: 12px;
+  }
+</style>
+
+<div class="ln-container">
+  
+  <!-- Dynamic Back Button Area -->
+  <div class="ln-back-nav">
+    <a href="javascript:void(0);" onclick="handleBackRedirection()" class="ln-back-link">
+      <i class="fas fa-arrow-left"></i> Back
+    </a>
+  </div>
+
+  <div class="ln-header">
+    <h2>Available Alumni</h2>
+  </div>
+
+  {% if total_sent_count >= 5 %}
+    <div class="ln-alert-banner">
+      <i class="fas fa-exclamation-circle"></i>
+      <span>You have reached your limit of 5 pending mentorship requests. You cannot send more requests right now.</span>
+    </div>
+  {% endif %}
+
+  <div class="ln-feed">
+    {% for alumnus in available_alumni %}
+      <div class="ln-row">
+        
+        <!-- Left Side: Alumni Profile Picture Connection Fetch -->
+        <div class="ln-avatar-wrapper">
+          {% if alumnus.alumni_profile.profile_pic %}
+            <img src="{{ alumnus.alumni_profile.profile_pic.url }}" class="ln-avatar" alt="Profile Picture">
+          {% else %}
+            <div class="ln-avatar-placeholder">{{ alumnus.username|slice:":2"|upper }}</div>
+          {% endif %}
+        </div>
+
+        <!-- Right Side: Text Details Block -->
+        <div class="ln-body">
+          <div class="ln-meta-line">
+            <a href="#" class="ln-name">{{ alumnus.get_full_name|default:alumnus.username }}</a>
+          </div>
+
+          <!-- Headline (Title & Company/Bio Info) -->
+          <p class="ln-headline">
+            {% if alumnus.alumni_profile.job_title %}
+              {{ alumnus.alumni_profile.job_title }} at {{ alumnus.alumni_profile.current_company|default:"Enterprise Partner" }}
+            {% else %}
+              {{ alumnus.alumni_profile.bio|default:"Alumni Member" }}
+            {% endif %}
+          </p>
+          
+          <!-- Subtext (Institution Info) -->
+          <p class="ln-subtext">
+            <i class="fas fa-university"></i>
+            {{ alumnus.institution.name|default:"Cross-Institution Affiliate" }}
+          </p>
+
+          <!-- Action Pill Button System -->
+          <div class="ln-actions">
+            {% if alumnus.id in sent_requests %}
+              <span class="ln-action-btn ln-btn-sent"><i class="fas fa-check" style="margin-right: 4px;"></i> Request Sent</span>
+            {% elif total_sent_count >= 5 %}
+              <span class="ln-action-btn ln-btn-disabled">Send Request</span>
+            {% else %}
+              <a href="{% url 'accounts:send_request' alumnus.id %}" class="ln-action-btn ln-btn-active" onclick="alert('Mentorship request successfully sent to {{ alumnus.username }}!');">
+                <i class="fas fa-paper-plane" style="font-size: 12px; margin-right: 4px;"></i> Send Request
+              </a>
+            {% endif %}
+          </div>
+        </div>
+
+      </div>
+    {% empty %}
+      <div class="ln-empty-state">
+        <i class="fas fa-users"></i>
+        <p>No available cross-institution mentors are configured in the system directory right now.</p>
+      </div>
+    {% endfor %}
+  </div>
+
+</div>
+
+<!-- Intelligent Referrer Redirection Script -->
+<script>
+function handleBackRedirection() {
+    // Agar hum browser history se check karein ki user kahan se aaya hai
+    if (document.referrer && document.referrer.includes(window.location.host)) {
+        window.location.href = document.referrer;
+    } else {
+        // Fallback safety filter: agar history unverified ho toh direct Student Dashboard bhejein
+        window.location.href = "{% url 'accounts:student_dashboard' %}";
+    }
+}
+</script>
+{% endblock %}

@@ -1,0 +1,152 @@
+{% extends 'layouts/base.html' %}
+
+{% block content %}
+<div class="container-fluid py-3" style="font-family: 'DM Sans', sans-serif; background: linear-gradient(135deg, #072219 0%, #0A2E22 100%); color: #fff; min-height: 85vh; border-radius: 16px; box-shadow: inset 0 0 40px rgba(0,0,0,0.5);">
+    
+    <!-- Top Header Ribbon -->
+    <div class="d-flex justify-content-between align-items-center mb-4 px-3">
+        <div>
+            <h4 class="m-0 font-weight-bold text-white" style="font-family: 'Sora', sans-serif;">Live Workspace Portal</h4>
+            <span class="small" style="color: #A3C9B8;">Meeting Unique Hash Token ID: <strong class="text-warning">{{ room_code }}</strong></span>
+        </div>
+        <button onclick="exitCallManually()" class="btn btn-outline-danger btn-sm px-3" style="border-radius: 20px; font-weight: 700; border-width: 2px;">
+            <i class="fas fa-sign-out-alt mr-1"></i> Exit Call
+        </button>
+    </div>
+
+    <!-- Video Grid Engine Block -->
+    <div class="row px-2">
+        <!-- 1. Local View Mirror Box -->
+        <div class="col-md-6 mb-3">
+            <div class="position-relative d-flex align-items-center justify-content-center" style="height: 420px; border-radius: 14px; overflow: hidden; border: 2px solid #144D38; background-color: #051812;">
+                <video id="localVideo" autoplay muted playsinline style="width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1);"></video>
+                <div class="position-absolute bottom-0 left-0 text-white px-3 py-1 small font-weight-bold" style="background: #0A2E22; opacity: 0.85; border-radius: 0 8px 0 0; border-top: 1px solid #144D38; border-right: 1px solid #144D38;">
+                    You (Local Stream Feed)
+                </div>
+                <!-- Camera off indicator shadow element -->
+                <div id="localAvatar" class="position-absolute d-none text-center">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center mx-auto mb-2" style="width: 90px; height: 90px; background-color: #0A2E22; border: 2px solid #144D38;">
+                        <i class="fas fa-user fa-3x style-color" style="color: #CFE3DA;"></i>
+                    </div>
+                    <span class="small" style="color: #A3C9B8;">Camera Disabled</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. Remote User View Box -->
+        <div class="col-md-6 mb-3">
+            <div class="position-relative d-flex align-items-center justify-content-center" style="height: 420px; border-radius: 14px; overflow: hidden; border: 2px solid #144D38; background-color: #051812;">
+                <video id="remoteVideo" autoplay playsinline style="width: 100%; height: 100%; object-fit: cover;"></video>
+                <div class="position-absolute bottom-0 left-0 text-white px-3 py-1 small font-weight-bold" style="background: #0A2E22; opacity: 0.85; border-radius: 0 8px 0 0; border-top: 1px solid #144D38; border-right: 1px solid #144D38;">
+                    Connection Peer Participant
+                </div>
+                <!-- Status layer screen text loader hint for testing -->
+                <div id="remotePlaceholder" class="position-absolute text-center" style="color: #A3C9B8;">
+                    <i class="fas fa-network-wired fa-2x mb-2 d-block" style="color: #144D38;"></i>
+                    <span class="small">Waiting for peer connection...</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Centralized Google Meet Style Bottom Control Bar -->
+    <div class="row mt-3">
+        <div class="col-12 d-flex justify-content-center align-items-center grid gap-3" style="gap: 14px;">
+            <!-- Microphone Toggle button slider -->
+            <button id="btnToggleAudio" class="btn btn-light rounded-circle shadow-lg d-flex align-items-center justify-content-center" style="width: 52px; height: 52px; transition: 0.2s;" onclick="toggleAudioStream()">
+                <i id="audioIcon" class="fas fa-microphone text-dark" style="font-size: 18px;"></i>
+            </button>
+
+            <!-- Video Camera Toggle button slider -->
+            <button id="btnToggleVideo" class="btn btn-light rounded-circle shadow-lg d-flex align-items-center justify-content-center" style="width: 52px; height: 52px; transition: 0.2s;" onclick="toggleVideoStream()">
+                <i id="videoIcon" class="fas fa-video text-dark" style="font-size: 18px;"></i>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Real-time Media Hardware Device Hook Controller Script Logic -->
+<script>
+let localStream = null;
+let audioEnabled = true;
+let videoEnabled = true;
+
+async function initMediaDevices() {
+    try {
+        localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+        document.getElementById('localVideo').srcObject = localStream;
+    } catch (error) {
+        console.error("Media Device Permission Hook Failed:", error);
+        alert("Microphone ya Camera hardware stream fetch karne me samasya aayi. Kripya check karein permissions allowed hain.");
+    }
+}
+
+function toggleAudioStream() {
+    if (localStream) {
+        audioEnabled = !audioEnabled;
+        localStream.getAudioTracks().forEach(track => track.enabled = audioEnabled);
+        
+        const btn = document.getElementById('btnToggleAudio');
+        const icon = document.getElementById('audioIcon');
+        
+        if (audioEnabled) {
+            btn.className = "btn btn-light rounded-circle shadow-lg d-flex align-items-center justify-content-center";
+            icon.className = "fas fa-microphone text-dark";
+        } else {
+            btn.className = "btn btn-danger rounded-circle shadow-lg d-flex align-items-center justify-content-center";
+            icon.className = "fas fa-microphone-slash text-white";
+        }
+    }
+}
+
+function toggleVideoStream() {
+    if (localStream) {
+        videoEnabled = !videoEnabled;
+        localStream.getVideoTracks().forEach(track => track.enabled = videoEnabled);
+        
+        const btn = document.getElementById('btnToggleVideo');
+        const icon = document.getElementById('videoIcon');
+        const localVidEl = document.getElementById('localVideo');
+        const avatarEl = document.getElementById('localAvatar');
+        
+        if (videoEnabled) {
+            btn.className = "btn btn-light rounded-circle shadow-lg d-flex align-items-center justify-content-center";
+            icon.className = "fas fa-video text-dark";
+            localVidEl.style.opacity = "1";
+            avatarEl.classList.add('d-none');
+        } else {
+            btn.className = "btn btn-danger rounded-circle shadow-lg d-flex align-items-center justify-content-center";
+            icon.className = "fas fa-video-slash text-white";
+            localVidEl.style.opacity = "0";
+            avatarEl.classList.remove('d-none');
+        }
+    }
+}
+
+// Custom Exit Handling Hooks
+function exitCallManually() {
+    fetch("/sessions/leave/{{ room_code }}/", {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}'
+        }
+    }).then(() => {
+        window.location.href = "{% url 'accounts:sessions_dashboard' %}";
+    }).catch((err) => {
+        console.error("Error logging room exit:", err);
+        window.location.href = "{% url 'accounts:sessions_dashboard' %}";
+    });
+}
+
+// Tab cut closure handling using beacon
+window.addEventListener('beforeunload', function (e) {
+    const fd = new FormData();
+    fd.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+    navigator.sendBeacon("/sessions/leave/{{ room_code }}/", fd);
+});
+
+document.addEventListener("DOMContentLoaded", function() {
+    initMediaDevices();
+});
+</script>
+{% endblock %}

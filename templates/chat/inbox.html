@@ -1,115 +1,423 @@
-{% extends "base.html" %}
+{% extends "layouts/base.html" %}
 {% block content %}
 
-<div class="container-fluid mt-3">
-  <div class="row">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=DM+Sans:wght@400;500&display=swap">
 
-    <!-- LEFT: Chat List -->
-    <div class="col-md-4">
-      <div class="card" style="height: 80vh; display:flex; flex-direction:column;">
+<style>
+  :root {
+    --brand:       #0F6B3F;
+    --brand-light: #E7F3EC;
+    --brand-dark:  #0A4A2C;
+    --surface:     #F3F2EE;
+    --card-bg:     #FFFFFF;
+    --text-primary:#191919;
+    --text-muted:  #666666;
+    --border:      #E0DDD8;
+    --radius:      12px;
+    --shadow:      0 1px 3px rgba(0,0,0,.08), 0 0 0 1px rgba(0,0,0,.04);
+  }
 
-        <!-- Header -->
-        <div class="card-header bg-success text-white">
-          <h5 class="mb-0">Chats</h5>
+  .lp-msg-wrapper {
+    font-family: 'DM Sans', sans-serif;
+    max-width: 1000px;
+    margin: 0 auto;
+  }
+
+  .lp-msg-shell {
+    display: flex;
+    background: var(--card-bg);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    height: 78vh;
+    overflow: hidden;
+  }
+
+  /* ── List column ─────────────────────────────────────── */
+  .lp-list-col {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid var(--border);
+  }
+
+  .lp-list-header {
+    padding: 18px 20px 14px;
+    border-bottom: 1px solid var(--border);
+  }
+  .lp-list-title {
+    font-family: 'Sora', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0 0 12px;
+  }
+
+  .lp-search-wrap {
+    position: relative;
+    margin-bottom: 10px;
+  }
+  .lp-search-wrap i {
+    position: absolute;
+    left: 12px; top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    font-size: 13px;
+  }
+  .lp-search-input {
+    width: 100%;
+    box-sizing: border-box;
+    border: 1.5px solid var(--border);
+    border-radius: 20px;
+    padding: 9px 40px 9px 32px;
+    font-size: 13px;
+    font-family: 'DM Sans', sans-serif;
+    color: var(--text-primary);
+    background: var(--surface);
+    outline: none;
+    transition: border-color .2s, background .2s;
+  }
+  .lp-search-input:focus {
+    border-color: var(--brand);
+    background: #fff;
+  }
+  
+  .lp-search-clear {
+    position: absolute;
+    right: 15px; top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 14px;
+    text-decoration: none !important;
+  }
+
+  .lp-filter-row {
+    display: flex;
+    gap: 6px;
+  }
+  .lp-filter-chip {
+    border: 1.5px solid var(--border);
+    background: #fff;
+    color: var(--text-muted);
+    font-size: 12px;
+    font-weight: 600;
+    padding: 5px 14px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    transition: border-color .15s, color .15s, background .15s;
+  }
+  .lp-filter-chip:hover { border-color: var(--brand); color: var(--brand); }
+  .lp-filter-chip.active {
+    background: var(--brand);
+    border-color: var(--brand);
+    color: #fff;
+  }
+
+  .lp-chat-list {
+    flex: 1;
+    overflow-y: auto;
+  }
+
+  .lp-section-heading {
+    background: var(--surface);
+    padding: 6px 20px;
+    font-family: 'Sora', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    letter-spacing: 0.5px;
+    margin: 0;
+  }
+
+  .lp-chat-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 14px 20px;
+    text-decoration: none;
+    border-bottom: 1px solid var(--border);
+    transition: background .15s;
+  }
+  .lp-chat-item:hover { background: var(--surface); text-decoration: none; }
+
+  .lp-chat-avatar {
+    width: 48px; height: 48px;
+    border-radius: 50%;
+    object-fit: cover;
+    background: #ddd;
+    flex-shrink: 0;
+  }
+
+  .lp-chat-body {
+    flex: 1;
+    min-width: 0;
+  }
+  .lp-chat-top-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .lp-chat-name {
+    font-family: 'Sora', sans-serif;
+    font-size: 14.5px;
+    font-weight: 600;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .lp-chat-time {
+    font-size: 11.5px;
+    color: var(--text-muted);
+    flex-shrink: 0;
+  }
+  .lp-chat-role {
+    display: inline-block;
+    font-size: 10.5px;
+    font-weight: 600;
+    color: var(--brand);
+    background: var(--brand-light);
+    border-radius: 10px;
+    padding: 1px 8px;
+    margin-bottom: 3px;
+  }
+  .lp-chat-preview {
+    font-size: 13px;
+    color: var(--text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+  }
+  .lp-chat-preview.unread-text {
+    color: var(--text-primary);
+    font-weight: 600;
+  }
+
+  .lp-unread-badge {
+    background: var(--brand);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    min-width: 18px;
+    height: 18px;
+    border-radius: 9px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 5px;
+    margin-top: 4px;
+  }
+
+  /* ── Empty states ────────────────────────────────────── */
+  .lp-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    padding: 40px 20px;
+    text-align: center;
+    color: var(--text-muted);
+  }
+  .lp-empty-icon {
+    width: 64px; height: 64px;
+    border-radius: 50%;
+    background: var(--brand-light);
+    color: var(--brand);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 24px;
+    margin-bottom: 14px;
+  }
+  .lp-empty-title {
+    font-family: 'Sora', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0 0 4px;
+  }
+  .lp-empty-sub {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin: 0;
+  }
+
+  /* ── Right placeholder panel ─────────────────────────── */
+  .lp-placeholder-col {
+    flex: 1;
+    display: none;
+  }
+  @media (min-width: 768px) {
+    .lp-list-col { width: 380px; flex-shrink: 0; }
+    .lp-placeholder-col { display: flex; }
+  }
+</style>
+
+<div class="lp-msg-wrapper">
+  <div class="lp-msg-shell">
+
+    <!-- LIST COLUMN -->
+    <div class="lp-list-col">
+
+      <div class="lp-list-header">
+        <p class="lp-list-title">Messaging</p>
+
+        <!-- Form Added for Database Search Execution -->
+        <form method="GET" action="{% url 'accounts:inbox' %}" id="searchForm">
+          <div class="lp-search-wrap">
+            <i class="fas fa-search"></i>
+            <input type="text" name="q" id="chatSearch" class="lp-search-input" placeholder="Search username & hit Enter..." value="{{ query|default:'' }}">
+            {% if query %}
+              <a href="{% url 'accounts:inbox' %}" class="lp-search-clear"><i class="fas fa-times"></i></a>
+            {% endif %}
+          </div>
+        </form>
+
+        <div class="lp-filter-row">
+          <button type="button" class="lp-filter-chip active" data-filter="all">All</button>
+          <button type="button" class="lp-filter-chip" data-filter="unread">Unread</button>
+          <button type="button" class="lp-filter-chip" data-filter="read">Read</button>
         </div>
+      </div>
 
-        <!-- 🔍 Search -->
-        <div class="p-2">
-          <input type="text" id="chatSearch" class="form-control" placeholder="Search chats...">
-        </div>
+      <div class="lp-chat-list" id="chatList">
+        
+        <!-- GLOBAL SEARCH RESULTS FOR FACULTY / USERS -->
+        {% if query and users %}
+          <p class="lp-section-heading">Search Results (Start New Chat)</p>
+          {% for u in users %}
+            <a href="{% url 'accounts:start_chat' user_id=u.id %}" class="lp-chat-item">
+              <img class="lp-chat-avatar"
+                   src="https://ui-avatars.com/api/?name={{ u.get_full_name|urlencode|default:u.username }}&background=0F6B3F&color=ffffff&size=96"
+                   alt="{{ u.username }}">
+              <div class="lp-chat-body">
+                <span class="lp-chat-role">{{ u.role|title }}</span>
+                <div class="lp-chat-top-row">
+                  <span class="lp-chat-name">{{ u.get_full_name|default:u.username }}</span>
+                </div>
+                <span class="lp-chat-preview">@{{ u.username }} • Click to message instantly</span>
+              </div>
+            </a>
+          {% endfor %}
+        {% endif %}
 
-        <!-- 🔘 Filter -->
-        <div class="px-2 pb-2">
-          <select id="filterChats" class="form-control">
-            <option value="all">All</option>
-            <option value="unread">Unread</option>
-            <option value="read">Read</option>
-          </select>
-        </div>
-
-        <!-- Chat List -->
-        <div class="list-group list-group-flush" id="chatList" style="overflow-y:auto;">
-
+        <!-- EXISTING CHATS SECTION -->
+        {% if convo_data %}
+          {% if query %}
+            <p class="lp-section-heading">Existing Conversations</p>
+          {% endif %}
+          
           {% for item in convo_data %}
-          <a href="{% url 'accounts:chat_view' convo_id=item.convo.id %}" 
-             class="list-group-item list-group-item-action chat-item"
-             data-name="{{ item.other_user.username|lower }}"
+          <a href="{% url 'accounts:chat_view' convo_id=item.convo.id %}"
+             class="lp-chat-item chat-item"
+             data-name="{{ item.other_user.get_full_name|default:item.other_user.username|lower }} {{ item.other_user.username|lower }}"
              data-unread="{% if item.unread_count > 0 %}true{% else %}false{% endif %}">
 
-            <div class="d-flex justify-content-between">
-              
-              <div>
-                <b>{{ item.other_user.username }}</b><br>
+            <img class="lp-chat-avatar"
+                 src="https://ui-avatars.com/api/?name={{ item.other_user.get_full_name|urlencode|default:item.other_user.username }}&background=0F6B3F&color=ffffff&size=96"
+                 alt="{{ item.other_user.get_full_name|default:item.other_user.username }}">
 
-                <small class="text-muted">
-                  {% if item.last_message %}
-                    {{ item.last_message.content|truncatechars:25 }}
-                  {% else %}
-                    Start chat...
-                  {% endif %}
-                </small>
-              </div>
-
-              <div class="text-end">
-                <small class="text-muted d-block">
-                  {% if item.last_message %}
-                    {{ item.last_message.created_at|date:"H:i" }}
-                  {% endif %}
-                </small>
-
-                {% if item.unread_count > 0 %}
-                  <span class="badge bg-success">
-                    {{ item.unread_count }}
-                  </span>
+            <div class="lp-chat-body">
+              <span class="lp-chat-role">{{ item.other_user.role|title }}</span>
+              <div class="lp-chat-top-row">
+                <span class="lp-chat-name">{{ item.other_user.get_full_name|default:item.other_user.username }}</span>
+                {% if item.last_message %}
+                  <span class="lp-chat-time">{{ item.last_message.created_at|date:"H:i" }}</span>
                 {% endif %}
               </div>
-
+              <div style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
+                <span class="lp-chat-preview{% if item.unread_count > 0 %} unread-text{% endif %}">
+                  {% if item.last_message %}
+                    {{ item.last_message.content|truncatechars:38 }}
+                  {% else %}
+                    Start the conversation
+                  {% endif %}
+                </span>
+                {% if item.unread_count > 0 %}
+                  <span class="lp-unread-badge">{{ item.unread_count }}</span>
+                {% endif %}
+              </div>
             </div>
-
           </a>
-          {% empty %}
-          <div class="p-3 text-center text-muted">No chats yet</div>
           {% endfor %}
+        {% else %}
+          {% if not query %}
+            <div class="lp-empty-state">
+              <div class="lp-empty-icon"><i class="far fa-comments"></i></div>
+              <p class="lp-empty-title">No chats yet</p>
+              <p class="lp-empty-sub">Your mentorship conversations will show up here.</p>
+            </div>
+          {% endif %}
+        {% endif %}
 
-        </div>
+        {% if query and not users and not convo_data %}
+          <div class="lp-empty-state">
+            <div class="lp-empty-icon"><i class="fas fa-search-minus"></i></div>
+            <p class="lp-empty-title">No users found</p>
+            <p class="lp-empty-sub">No user matches "@{{ query }}" in your university.</p>
+          </div>
+        {% endif %}
 
       </div>
     </div>
 
-    <!-- RIGHT EMPTY -->
-    <div class="col-md-8 d-flex align-items-center justify-content-center">
-      <h5 class="text-muted">Select a chat 💬</h5>
+    <!-- RIGHT PLACEHOLDER -->
+    <div class="lp-placeholder-col">
+      <div class="lp-empty-state">
+        <div class="lp-empty-icon"><i class="far fa-comment-dots"></i></div>
+        <p class="lp-empty-title">Select a chat</p>
+        <p class="lp-empty-sub">Choose a conversation from the list to start messaging.</p>
+      </div>
     </div>
 
-  </div>  
+  </div>
 </div>
 
-
 <script>
-const searchInput = document.getElementById("chatSearch");
-const filterSelect = document.getElementById("filterChats");
-const chatItems = document.querySelectorAll(".chat-item");
+(function () {
+  const searchInput = document.getElementById("chatSearch");
+  const filterChips = document.querySelectorAll(".lp-filter-chip");
+  const chatItems = document.querySelectorAll(".chat-item");
+  let activeFilter = "all";
 
-function filterChats() {
-  const search = searchInput.value.toLowerCase();
-  const filter = filterSelect.value;
+  function applyFilters() {
+    const search = searchInput.value.toLowerCase().trim();
 
-  chatItems.forEach(item => {
-    const name = item.dataset.name;
-    const isUnread = item.dataset.unread === "true";
+    chatItems.forEach(item => {
+      const name = item.dataset.name || "";
+      const isUnread = item.dataset.unread === "true";
 
-    let show = true;
+      let show = true;
+      // Client side filter only applies if backend query is empty to prevent UI glitching
+      {% if not query %}
+        if (search && !name.includes(search)) show = false;
+      {% endif %}
+      if (activeFilter === "unread" && !isUnread) show = false;
+      if (activeFilter === "read" && isUnread) show = false;
 
-    if (!name.includes(search)) show = false;
-    if (filter === "unread" && !isUnread) show = false;
-    if (filter === "read" && isUnread) show = false;
+      item.style.display = show ? "flex" : "none";
+    });
+  }
 
-    item.style.display = show ? "block" : "none";
+  // Pehle input event par filter hota tha, humne client side tab filters ke liye isko active rakha hai
+  searchInput.addEventListener("keyup", function(e) {
+    if(e.key === "Enter") {
+        document.getElementById("searchForm").submit();
+    }
   });
-}
 
-searchInput.addEventListener("input", filterChats);
-filterSelect.addEventListener("change", filterChats);
+  filterChips.forEach(chip => {
+    chip.addEventListener("click", function () {
+      filterChips.forEach(c => c.classList.remove("active"));
+      this.classList.add("active");
+      activeFilter = this.dataset.filter;
+      applyFilters();
+    });
+  });
+})();
 </script>
 
 {% endblock %}

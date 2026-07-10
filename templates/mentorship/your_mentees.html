@@ -1,0 +1,198 @@
+{% extends 'layouts/base.html' %}
+
+{% block content %}
+<style>
+  :root {
+    --ym-brand:       #0B3D2E;
+    --ym-brand-dark:  #062820;
+    --ym-brand-light: #E4F1EA;
+    --ym-card:        #FFFFFF;
+    --ym-text:        #14231C;
+    --ym-muted:       #5B6B62;
+    --ym-border:      #DCE6E0;
+    --ym-radius:      12px;
+    --ym-shadow:      0 1px 3px rgba(0,0,0,.08), 0 0 0 1px rgba(0,0,0,.04);
+    --ym-info-bg:     #EBF8FF;
+    --ym-info-text:   #2B6CB0;
+  }
+
+  .ym-wrap { font-family: 'DM Sans', sans-serif; color: var(--ym-text); }
+
+  .ym-header { margin-bottom: 24px; }
+  .ym-header h2 { font-family: 'Sora', sans-serif; font-weight: 700; font-size: 24px; margin: 0 0 4px; }
+  .ym-header p { color: var(--ym-muted); font-size: 14px; margin: 0; }
+
+  /* ── Mentee Feed Layout ── */
+  .ym-feed-list {
+    background: var(--ym-card); 
+    border: 1px solid var(--ym-border); 
+    border-radius: var(--ym-radius); 
+    overflow: hidden; 
+    box-shadow: var(--ym-shadow);
+    display: flex;
+    flex-direction: column;
+  }
+
+  .ym-row { 
+    display: flex; 
+    padding: 24px; 
+    border-bottom: 1px solid var(--ym-border); 
+    gap: 18px; 
+    align-items: flex-start; 
+    transition: background 0.2s;
+  }
+  .ym-row:last-child { border-bottom: none; }
+  .ym-row:hover { background: #F9FBF9; }
+
+  .ym-avatar-wrapper { flex-shrink: 0; }
+  .ym-avatar { 
+    width: 72px; 
+    height: 72px; 
+    border-radius: 50%; 
+    object-fit: cover; 
+    border: 1px solid var(--ym-border); 
+  }
+  .ym-avatar-placeholder { 
+    width: 72px; 
+    height: 72px; 
+    border-radius: 50%; 
+    background-color: var(--ym-brand-light); 
+    color: var(--ym-brand); 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    font-family: 'Sora', sans-serif; 
+    font-weight: 700; 
+    font-size: 22px; 
+    border: 1px solid var(--ym-border); 
+  }
+
+  .ym-body { flex-grow: 1; }
+  .ym-name { font-family: 'DM Sans', sans-serif; font-weight: 700; font-size: 16px; color: var(--ym-text); margin: 0; }
+  .ym-username { font-size: 13.5px; color: var(--ym-muted); font-weight: 400; margin-left: 4px; }
+  
+  .ym-headline { font-size: 14px; color: var(--ym-text); margin: 4px 0; line-height: 1.4; }
+  .ym-institution { 
+    font-size: 13px; 
+    color: var(--ym-muted); 
+    margin: 4px 0 0 0; 
+    display: inline-flex; 
+    align-items: center; 
+    gap: 6px; 
+  }
+
+  /* ── Status Badges ── */
+  .ym-meta-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 14px;
+    border-top: 1px dashed var(--ym-border);
+    padding-top: 12px;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .ym-pill {
+    display: inline-flex; 
+    align-items: center; 
+    padding: 5px 14px; 
+    border-radius: 24px; 
+    font-size: 11.5px; 
+    font-weight: 700; 
+    text-transform: uppercase;
+    letter-spacing: .03em;
+  }
+  .ym-pill.accepted { background: var(--ym-brand-light); color: var(--ym-brand); }
+  .ym-pill.past { background: var(--ym-info-bg); color: var(--ym-info-text); }
+
+  .ym-action-link {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ym-brand);
+    text-decoration: none !important;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .ym-action-link:hover { color: var(--ym-brand-dark); text-decoration: underline !important; }
+
+  .ym-empty { 
+    text-align: center; 
+    padding: 60px 20px; 
+    color: var(--ym-muted); 
+  }
+  .ym-empty i { font-size: 32px; color: var(--ym-border); display: block; margin-bottom: 12px; }
+  .ym-empty p { margin: 0; font-size: 14px; }
+</style>
+
+<div class="ym-wrap">
+  
+  <!-- Heading Section -->
+  <div class="ym-header">
+    <h2>Your Mentees</h2>
+    <p>Overview of all students who currently hold or previously completed guided mentorship associations with you.</p>
+  </div>
+
+  <!-- Horizontal Cards Feed List -->
+  <div class="ym-feed-list">
+    {% for mentee_relation in mentees %}
+      <div class="ym-row">
+        
+        <!-- Profile Picture Column -->
+        <div class="ym-avatar-wrapper">
+          {% if mentee_relation.student.student_profile.profile_pic %}
+            <img src="{{ mentee_relation.student.student_profile.profile_pic.url }}" class="ym-avatar" alt="Profile Pic">
+          {% else %}
+            <div class="ym-avatar-placeholder">
+              {{ mentee_relation.student.username|slice:":2"|upper }}
+            </div>
+          {% endif %}
+        </div>
+
+        <!-- Student Context Info Column -->
+        <div class="ym-body">
+          <div>
+            <span class="ym-name">{{ mentee_relation.student.get_full_name|default:mentee_relation.student.username }}</span>
+            <span class="ym-username">@{{ mentee_relation.student.username }}</span>
+          </div>
+
+          <p class="ym-headline">
+            {{ mentee_relation.student.student_profile.bio|default:"Aspiring Learner | Open to guidance and career opportunities." }}
+          </p>
+
+          <p class="ym-institution">
+            <i class="fas fa-university"></i>
+            {{ mentee_relation.student.institution.name|default:"Partner Academic Institution" }}
+          </p>
+
+          <!-- Status and Actions row block -->
+          <div class="ym-meta-wrap">
+            <div>
+              {% if mentee_relation.is_past_mentorship or mentee_relation.status|lower == 'completed' %}
+                <span class="ym-pill past"><i class="fas fa-history" style="margin-right: 5px; font-size: 10px;"></i> Past Mentee</span>
+              {% else %}
+                <span class="ym-pill accepted"><i class="fas fa-check-circle" style="margin-right: 5px; font-size: 10px;"></i> Accepted</span>
+              {% endif %}
+            </div>
+
+            <div>
+              <a href="{% url 'accounts:inbox' %}?user={{ mentee_relation.student.username }}" class="ym-action-link">
+                <i class="far fa-comment-alt"></i> Chat Workspace →
+              </a>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    {% empty %}
+      <!-- Empty State -->
+      <div class="ym-empty">
+        <i class="fas fa-users-slash"></i>
+        <p>No active or historical mentee profiles connected to your dashboard network yet.</p>
+      </div>
+    {% endfor %}
+  </div>
+
+</div>
+{% endblock %}
