@@ -113,7 +113,7 @@
     cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 5px;
   }
   .fd-btn-outline { background: #fff; border: 1.5px solid var(--fd-border); color: var(--fd-text); }
-  .fd-btn-outline:hover { border-color: var(--fd-brand); color: var(--fd-brand); }
+  .fd-btn-outline:hover { border-color: var(--fd-brand); color: var(--brand); }
   .fd-btn-primary { background: var(--fd-brand); color: #fff; }
   .fd-btn-primary:hover { background: var(--fd-brand-dark); color: #fff; }
 
@@ -155,7 +155,6 @@
     <p>Review and verify alumni identity submissions for {{ request.user.institution.name|default:"your institution" }}.</p>
   </div>
 
-  
   {% if not just_requests %}
   <!-- ── Stats ── -->
   <div class="fd-stats">
@@ -197,7 +196,7 @@
         <button type="button" class="fd-tab active" onclick="fdFilter('all', this)">All</button>
         <button type="button" class="fd-tab" onclick="fdFilter('PENDING', this)">Pending</button>
         <button type="button" class="fd-tab" onclick="fdFilter('FACULTY_APPROVED', this)">Faculty Approved</button>
-        <button type="button" class="fd-tab" onclick="fdFilter('VERIFIED', this)">Verified</button>
+        <!-- VERIFIED tab option removed from here to clean main space -->
         <button type="button" class="fd-tab" onclick="fdFilter('REJECTED', this)">Rejected</button>
       </div>
 
@@ -247,7 +246,7 @@
         {% empty %}
         <div class="fd-empty">
           <i class="far fa-folder-open"></i>
-          <p>No verification requests yet. New submissions from alumni will show up here.</p>
+          <p>No verification requests pending or under review. All verified alumni appear in the side panel.</p>
         </div>
         {% endfor %}
       </div>

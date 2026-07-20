@@ -131,7 +131,7 @@
     <div class="ym-mentor-card">
       <div class="ym-mentor-top">
         <img class="ym-avatar"
-             src="https://ui-avatars.com/api/?name={{ accepted_request.alumni.get_full_name|urlencode|default:accepted_request.alumni.username }}&background=0B3D2E&color=ffffff&size=128"
+             src="{% if accepted_request.alumni.alumni_profile.profile_pic %}{{ accepted_request.alumni.alumni_profile.profile_pic.url }}{% else %}https://ui-avatars.com/api/?name={{ accepted_request.alumni.get_full_name|urlencode|default:accepted_request.alumni.username }}&background=0B3D2E&color=ffffff&size=128{% endif %}"
              alt="{{ accepted_request.alumni.get_full_name|default:accepted_request.alumni.username }}">
 
         <div class="ym-mentor-info">
@@ -171,6 +171,11 @@
         <a href="{% url 'accounts:start_chat' accepted_request.alumni.id %}" class="ym-btn ym-btn-primary">
           <i class="fas fa-paper-plane"></i> Message Mentor
         </a>
+        <a href="{% url 'accounts:end_mentorship' accepted_request.id %}?next={% url 'accounts:my_requests' %}"
+           class="ym-btn ym-btn-outline"
+           onclick="return confirm('Mark this mentorship as completed? You will need a new request to get another mentor.');">
+          <i class="fas fa-flag-checkered"></i> End Mentorship
+        </a>
       </div>
     </div>
 
@@ -192,7 +197,7 @@
       {% for req in pending_requests %}
         <div class="ym-req-card">
           <img class="ym-req-avatar"
-               src="https://ui-avatars.com/api/?name={{ req.alumni.get_full_name|urlencode|default:req.alumni.username }}&background=0B3D2E&color=ffffff&size=84"
+               src="{% if req.alumni.alumni_profile.profile_pic %}{{ req.alumni.alumni_profile.profile_pic.url }}{% else %}https://ui-avatars.com/api/?name={{ req.alumni.get_full_name|urlencode|default:req.alumni.username }}&background=0B3D2E&color=ffffff&size=84{% endif %}"
                alt="{{ req.alumni.get_full_name|default:req.alumni.username }}">
           <div class="ym-req-main">
             <p class="ym-req-name">{{ req.alumni.get_full_name|default:req.alumni.username }}</p>
@@ -202,6 +207,11 @@
           </div>
           <span class="ym-req-time">Sent {{ req.created_at|timesince }} ago</span>
           <span class="ym-pill pending">Pending</span>
+          <a href="{% url 'accounts:cancel_request' req.id %}?next={% url 'accounts:my_requests' %}"
+             class="ym-btn ym-btn-outline" style="padding: 6px 14px; font-size: 12.5px;"
+             onclick="return confirm('Cancel this mentorship request?');">
+            Cancel Request
+          </a>
         </div>
       {% endfor %}
     </div>
@@ -214,7 +224,7 @@
         {% for req in past_requests %}
           <div class="ym-req-card">
             <img class="ym-req-avatar"
-                 src="https://ui-avatars.com/api/?name={{ req.alumni.get_full_name|urlencode|default:req.alumni.username }}&background=999999&color=ffffff&size=84"
+                 src="{% if req.alumni.alumni_profile.profile_pic %}{{ req.alumni.alumni_profile.profile_pic.url }}{% else %}https://ui-avatars.com/api/?name={{ req.alumni.get_full_name|urlencode|default:req.alumni.username }}&background=999999&color=ffffff&size=84{% endif %}"
                  alt="{{ req.alumni.get_full_name|default:req.alumni.username }}">
             <div class="ym-req-main">
               <p class="ym-req-name">{{ req.alumni.get_full_name|default:req.alumni.username }}</p>

@@ -189,6 +189,18 @@ class VerificationRequest(models.Model):
 
     updated_at = models.DateTimeField(auto_now=True)
 
+    def save(self, *args, **kwargs):
+        # Agar status ADMIN_APPROVED ya VERIFIED par set ho gaya hai (jaise shell se ya admin panel se)
+        if self.status in ['ADMIN_APPROVED', 'VERIFIED']:
+            # Custom sync logic: User model par is_verified ko True mark karo
+            if not self.user.is_verified:
+                self.user.is_verified = True
+                self.user.save(update_fields=['is_verified'])
+                
+        super().save(*args, **kwargs)
+
+
+
     # ---------------- VALIDATIONS ---------------- #
 
     def clean(self):
@@ -287,12 +299,18 @@ class VerificationRequest(models.Model):
 # *************************************** Mentorship Request System ******************************************************
 class MentorshipRequest(models.Model):
 
-    STATUS_CHOICES = [('PENDING', 'Pending'), ('ACCEPTED', 'Accepted'), ('REJECTED','Rejected'),]
+    STATUS_CHOICES = [
+        ('PENDING', 'Pending'),
+        ('ACCEPTED', 'Accepted'),
+        ('REJECTED', 'Rejected'),
+        ('COMPLETED', 'Completed'),   # NEW: mentorship has ended, student is free to send new requests
+    ]
     student = models.ForeignKey(User, on_delete = models.CASCADE, related_name= 'sent_requests')
     alumni = models.ForeignKey(User, on_delete = models.CASCADE, related_name= 'received_requests')
     status = models.CharField(max_length =20, choices = STATUS_CHOICES, default= 'PENDING')
 
     created_at = models.DateTimeField(auto_now_add= True)
+    ended_at = models.DateTimeField(null=True, blank=True)  # NEW: timestamp for when mentorship was marked COMPLETED
 
     
 
@@ -323,13 +341,13 @@ class MentorshipRequest(models.Model):
         if MentorshipRequest.objects.filter(
         student=self.student,
         alumni=self.alumni,
-        status='PENDING').exists():
+        status='PENDING').exclude(id=self.id).exists():
             raise ValidationError("You already have a pending request with this alumni.")
 
         # Prevent student from taking mentorship from another mentor.
         if MentorshipRequest.objects.filter(
         student=self.student,
-        status="ACCEPTED").exists():
+        status="ACCEPTED").exclude(id=self.id).exists():
             raise ValidationError("You already have a mentor.")
     
     def save(self, *args, **kwargs):

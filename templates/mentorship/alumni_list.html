@@ -52,21 +52,6 @@
     margin: 0;
   }
 
-  /* Limit Alert Banner */
-  .ln-alert-banner {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    background-color: #FDF2F2;
-    border: 1px solid #F8B4B4;
-    color: #9B1C1C;
-    padding: 14px 20px;
-    border-radius: 8px;
-    margin-bottom: 24px;
-    font-size: 14px;
-    font-weight: 500;
-  }
-
   /* Main Row Layout System */
   .ln-feed {
     background: #FFFFFF;
@@ -188,6 +173,20 @@
     border: 1px solid var(--forest-green);
     cursor: default;
   }
+  .ln-btn-cancel {
+    background-color: #FDECEA;
+    color: #B3261E;
+    border: 1px solid #B3261E;
+    cursor: pointer;
+  }
+  .ln-btn-cancel:hover { background-color: #B3261E; color: #fff; }
+
+  .ln-status-pill {
+    display: inline-block; padding: 3px 11px; border-radius: 20px;
+    font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .03em;
+  }
+  .ln-status-pill.pending  { background: #FFF6E5; color: #B7791F; }
+  .ln-status-pill.accepted { background: var(--forest-green); color: #fff; }
 
   .ln-empty-state {
     text-align: center;
@@ -205,7 +204,7 @@
   
   <!-- Dynamic Back Button Area -->
   <div class="ln-back-nav">
-    <a href="javascript:void(0);" onclick="handleBackRedirection()" class="ln-back-link">
+    <a href="{% url 'accounts:student_dashboard' %}" class="ln-back-link">
       <i class="fas fa-arrow-left"></i> Back
     </a>
   </div>
@@ -213,13 +212,6 @@
   <div class="ln-header">
     <h2>Available Alumni</h2>
   </div>
-
-  {% if total_sent_count >= 5 %}
-    <div class="ln-alert-banner">
-      <i class="fas fa-exclamation-circle"></i>
-      <span>You have reached your limit of 5 pending mentorship requests. You cannot send more requests right now.</span>
-    </div>
-  {% endif %}
 
   <div class="ln-feed">
     {% for alumnus in available_alumni %}
@@ -238,6 +230,11 @@
         <div class="ln-body">
           <div class="ln-meta-line">
             <a href="#" class="ln-name">{{ alumnus.get_full_name|default:alumnus.username }}</a>
+            {% if alumnus.my_request_status == "PENDING" %}
+              <span class="ln-status-pill pending">Pending</span>
+            {% elif alumnus.my_request_status == "ACCEPTED" %}
+              <span class="ln-status-pill accepted">Accepted</span>
+            {% endif %}
           </div>
 
           <!-- Headline (Title & Company/Bio Info) -->
@@ -255,14 +252,30 @@
             {{ alumnus.institution.name|default:"Cross-Institution Affiliate" }}
           </p>
 
-          <!-- Action Pill Button System -->
+          <!-- Optimized Action Pill Button System -->
           <div class="ln-actions">
-            {% if alumnus.id in sent_requests %}
-              <span class="ln-action-btn ln-btn-sent"><i class="fas fa-check" style="margin-right: 4px;"></i> Request Sent</span>
-            {% elif total_sent_count >= 5 %}
-              <span class="ln-action-btn ln-btn-disabled">Send Request</span>
+            {% if alumnus.my_request_status == "PENDING" %}
+              <!-- 1. Is alumni ko already request bheji hui hai -->
+              <a href="{% url 'accounts:cancel_request' alumnus.my_request_id %}?next={% url 'accounts:alumni_list' %}"
+                 class="ln-action-btn ln-btn-cancel" onclick="return confirm('Cancel this mentorship request?');">
+                <i class="fas fa-times" style="margin-right: 4px;"></i> Cancel Request
+              </a>
+            {% elif alumnus.my_request_status == "ACCEPTED" %}
+              <!-- 2. Ye alumni current logged in student ka mentor hai -->
+              <span class="ln-action-btn ln-btn-sent"><i class="fas fa-check" style="margin-right: 4px;"></i> Accepted</span>
+            {% elif has_accepted_mentor %}
+              <!-- 3. Student ke paas PEHLE SE KOI DOOSRA MENTOR HAI: Card dikhega par button disabled rahega -->
+              <span class="ln-action-btn ln-btn-disabled" title="You already have an active mentor.">
+                Not Available
+              </span>
+            {% elif not can_send_request %}
+              <!-- 4. Student ki 5 max pending request limit hit ho chuki hai -->
+              <span class="ln-action-btn ln-btn-disabled" title="Pending requests limit reached (Max 5).">
+                Limit Reached
+              </span>
             {% else %}
-              <a href="{% url 'accounts:send_request' alumnus.id %}" class="ln-action-btn ln-btn-active" onclick="alert('Mentorship request successfully sent to {{ alumnus.username }}!');">
+              <!-- 5. Bilkul fresh card hai aur user request bhej sakta hai -->
+              <a href="{% url 'accounts:send_request' alumnus.id %}?next={% url 'accounts:alumni_list' %}" class="ln-action-btn ln-btn-active">
                 <i class="fas fa-paper-plane" style="font-size: 12px; margin-right: 4px;"></i> Send Request
               </a>
             {% endif %}
@@ -280,16 +293,4 @@
 
 </div>
 
-<!-- Intelligent Referrer Redirection Script -->
-<script>
-function handleBackRedirection() {
-    // Agar hum browser history se check karein ki user kahan se aaya hai
-    if (document.referrer && document.referrer.includes(window.location.host)) {
-        window.location.href = document.referrer;
-    } else {
-        // Fallback safety filter: agar history unverified ho toh direct Student Dashboard bhejein
-        window.location.href = "{% url 'accounts:student_dashboard' %}";
-    }
-}
-</script>
 {% endblock %}

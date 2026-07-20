@@ -19,6 +19,35 @@ from django.db import models
 from datetime import datetime
 
 
+# Max number of PENDING mentorship requests a student may have open at once
+MAX_PENDING_MENTORSHIP_REQUESTS = 5
+
+
+def _annotate_mentorship_status(alumni_iterable, student):
+    """
+    Attaches `my_request_status` ('PENDING' / 'ACCEPTED' / None) and
+    `my_request_id` onto each alumni object, based on this student's
+    existing MentorshipRequest with them. REJECTED requests are treated
+    as None so the student can send a fresh request.
+    """
+    alumni_list = list(alumni_iterable)
+    alumni_ids = [a.id for a in alumni_list]
+
+    live_requests = MentorshipRequest.objects.filter(
+        student=student,
+        alumni_id__in=alumni_ids,
+        status__in=["PENDING", "ACCEPTED"]
+    )
+    status_map = {r.alumni_id: r for r in live_requests}
+
+    for alumni in alumni_list:
+        req = status_map.get(alumni.id)
+        alumni.my_request_status = req.status if req else None
+        alumni.my_request_id = req.id if req else None
+
+    return alumni_list
+
+
 # ---------------------- LOGIN VIEW ----------------------
 def user_login(request):
     if request.method == "POST":
@@ -81,37 +110,51 @@ def student_dashboard(request):
     accepted_request = MentorshipRequest.objects.filter(
         student=student,
         status='ACCEPTED'
-    ).select_related('alumni').first()
+    ).select_related('alumni', 'alumni__alumni_profile').first()
 
     pending_requests = MentorshipRequest.objects.filter(
         student=student,
         status='PENDING'
     )
 
+    completed_mentorship_count = MentorshipRequest.objects.filter(
+        student=student,
+        status='COMPLETED'
+    ).count()
+
     # 2. CROSS-INSTITUTION ALUMNI QUERY WITH 3 ITEMS LIMIT
-    suggested_alumni = User.objects.select_related(
+    suggested_qs = User.objects.select_related(
         "alumni_profile", "institution"
     ).filter(
         role="ALUMNI",
         is_suspended=False,
         is_verified=True,  # Taaki sirf verified professional profiles hi show ho
         alumni_profile__mentorship_available=True
-    ).order_by('?')[:3]
+    ).order_by('?')[:6]
+
+    suggested_alumni = _annotate_mentorship_status(suggested_qs, student)
 
     # 3. 5-Request Limitation Budget Tracker for Action Buttons Synchronization
-    sent_requests_qs = MentorshipRequest.objects.filter(
-        student=student,
-        status="PENDING"
-    )
-    total_sent_count = sent_requests_qs.count()
-    sent_requests_ids = set(sent_requests_qs.values_list("alumni_id", flat=True))
+    total_sent_count = pending_requests.count()
+    can_send_request = total_sent_count < MAX_PENDING_MENTORSHIP_REQUESTS and not accepted_request
+
+    if accepted_request:
+        send_blocked_message = "You already have a mentor. You can only mentor with one alumni at a time."
+    elif total_sent_count >= MAX_PENDING_MENTORSHIP_REQUESTS:
+        send_blocked_message = f"You have already sent {MAX_PENDING_MENTORSHIP_REQUESTS} requests. Wait for a response before sending more."
+    else:
+        send_blocked_message = ""
 
     context = {
         'accepted_request': accepted_request,
         'pending_requests': pending_requests,
-        'suggested_alumni': suggested_alumni,       
-        'sent_requests': sent_requests_ids,         
-        'total_sent_count': total_sent_count,       
+        'suggested_alumni': suggested_alumni,
+        'total_sent_count': total_sent_count,
+        'completed_mentorship_count': completed_mentorship_count,
+        'has_accepted_mentor': accepted_request is not None,
+        'can_send_request': can_send_request,
+        'send_blocked_message': send_blocked_message,
+        'max_pending_requests': MAX_PENDING_MENTORSHIP_REQUESTS,
     }
 
     return render(request, 'dashboards/student_dashboard.html', context)
@@ -125,7 +168,7 @@ def alumni_dashboard(request):
     alumni = request.user
 
     # 1. Mentorship requests tracking context (Students who requested this alumnus)
-    incoming_requests = MentorshipRequest.objects.filter(alumni=alumni).select_related('student', 'student__student_profile')
+    incoming_requests = MentorshipRequest.objects.filter(alumni=alumni).select_related('student', 'student__student_profile', 'student__institution')
     
     pending_requests = incoming_requests.filter(status='PENDING')
     accepted_requests = incoming_requests.filter(status='ACCEPTED')
@@ -138,7 +181,6 @@ def alumni_dashboard(request):
         verification_status = latest_verification.status
 
     # 3. Scheduled/active/completed sessions this alumni is part of
-    #    (as either the creator or the participant)
     planned_sessions = MentorshipSession.objects.filter(
         Q(creator=alumni) | Q(participant=alumni),
         status='SCHEDULED'
@@ -154,7 +196,7 @@ def alumni_dashboard(request):
         s.other_profile = getattr(other, 'student_profile', None) or getattr(other, 'alumni_profile', None)
 
     context = {
-        'incoming_requests': incoming_requests, # FIX: Yeh missing tha jisse loop chal sake
+        'incoming_requests': incoming_requests, 
         'pending_requests': pending_requests,
         'accepted_requests': accepted_requests,
         'received_requests_count': incoming_requests.count(), # Top Card 1
@@ -167,6 +209,7 @@ def alumni_dashboard(request):
 
     return render(request, 'dashboards/alumni_dashboard.html', context)
 
+@login_required(login_url='accounts:login')
 def faculty_dashboard(request):
     if not request.user.is_authenticated or request.user.role != "FACULTY":
         return HttpResponseForbidden("Access denied.")
@@ -174,8 +217,11 @@ def faculty_dashboard(request):
     # 1. Sabse pehle URL check karo ki kya notification se click karke aaye hain
     just_requests = request.GET.get('just_requests') == 'true'
 
+    # MAIN LIST LOGIC: Is section me hum fully verified log (ADMIN_APPROVED, VERIFIED) ko exclude kar rahe hain
     verification_requests = VerificationRequest.objects.filter(
         user__institution=request.user.institution
+    ).exclude(
+        status__in=['ADMIN_APPROVED', 'VERIFIED']
     ).select_related('user').order_by('-created_at')
 
     total_alumni = User.objects.filter(
@@ -202,8 +248,10 @@ def faculty_dashboard(request):
         'verification_rate': round((verified_alumni / total_alumni) * 100) if total_alumni else 0,
     }
 
-    recently_verified = verification_requests.filter(
-        status='VERIFIED'
+    # RIGHT SIDE PANEL LOGIC: Yahan hum explicitly unko fetch kar rahe hain jo admin panel/shell se full verify ho chuke hain
+    recently_verified = VerificationRequest.objects.filter(
+        user__institution=request.user.institution,
+        status__in=['ADMIN_APPROVED', 'VERIFIED']
     ).order_by('-updated_at')[:5]
 
     # 2. Context ke andar "just_requests" bhej do taaki HTML isko read kar sake
@@ -213,7 +261,6 @@ def faculty_dashboard(request):
         "recently_verified": recently_verified,
         "just_requests": just_requests,  
     })
-
 # ---------------------- ALUMNI LIST (STUDENTS ONLY) ----------------------
 @login_required
 def alumni_list(request):
@@ -238,18 +285,37 @@ def alumni_list(request):
     if institution_id and Institution.objects.filter(id=institution_id).exists():
         available_alumni = available_alumni.filter(institution_id=institution_id)
 
+    available_alumni = _annotate_mentorship_status(available_alumni, request.user)
+
     # 5-request limitation budget tracker calculation logic
-    sent_requests_qs = MentorshipRequest.objects.filter(
+    total_sent_count = MentorshipRequest.objects.filter(
         student=request.user,
         status="PENDING"
-    )
-    total_sent_count = sent_requests_qs.count()
-    sent_requests_ids = set(sent_requests_qs.values_list("alumni_id", flat=True))
+    ).count()
+
+    # If this student already has an accepted mentor, they cannot send any new
+    # requests (to this alumni or any other) until that mentorship ends.
+    has_accepted_mentor = MentorshipRequest.objects.filter(
+        student=request.user,
+        status="ACCEPTED"
+    ).exists()
+
+    can_send_request = total_sent_count < MAX_PENDING_MENTORSHIP_REQUESTS and not has_accepted_mentor
+
+    if has_accepted_mentor:
+        send_blocked_message = "You already have a mentor. You can only mentor with one alumni at a time."
+    elif total_sent_count >= MAX_PENDING_MENTORSHIP_REQUESTS:
+        send_blocked_message = f"You have already sent {MAX_PENDING_MENTORSHIP_REQUESTS} requests. Wait for a response before sending more."
+    else:
+        send_blocked_message = ""
 
     context = {
         "available_alumni": available_alumni, 
-        "sent_requests": sent_requests_ids,
         "total_sent_count": total_sent_count,
+        "has_accepted_mentor": has_accepted_mentor,
+        "can_send_request": can_send_request,
+        "send_blocked_message": send_blocked_message,
+        "max_pending_requests": MAX_PENDING_MENTORSHIP_REQUESTS,
     }
 
     return render(request, "mentorship/alumni_list.html", context)
@@ -268,6 +334,20 @@ def send_request(request, alumni_id):
     ).exists():
         messages.error(request, "You already have a mentor.")
         return redirect("accounts:alumni_list")
+
+    pending_count = MentorshipRequest.objects.filter(
+        student=request.user,
+        status="PENDING"
+    ).count()
+
+    if pending_count >= MAX_PENDING_MENTORSHIP_REQUESTS:
+        messages.error(
+            request,
+            f"You have already sent {MAX_PENDING_MENTORSHIP_REQUESTS} requests. "
+            f"Wait for a response before sending more."
+        )
+        next_url = request.GET.get('next')
+        return redirect(next_url) if next_url else redirect("accounts:alumni_list")
 
     existing = MentorshipRequest.objects.filter(
         student=request.user,
@@ -296,8 +376,39 @@ def send_request(request, alumni_id):
     except Exception as e:
         messages.error(request, str(e))
 
+    next_url = request.POST.get('next') or request.GET.get('next')
+    if next_url:
+        return redirect(next_url)
     return redirect("accounts:alumni_list")
-    
+
+
+# Cancel a pending mentorship request (student-initiated)
+def cancel_request(request, request_id):
+
+    if not request.user.is_authenticated or request.user.role != "STUDENT":
+        return HttpResponseForbidden("Only students can cancel requests.")
+
+    req = get_object_or_404(MentorshipRequest, id=request_id, student=request.user)
+
+    if req.status != "PENDING":
+        messages.error(request, "Only pending requests can be cancelled.")
+    else:
+        alumni = req.alumni
+        req.delete()
+        notify(
+            recipient=alumni,
+            sender=request.user,
+            title="Mentorship Request Cancelled",
+            message=f"{request.user.get_full_name() or request.user.username} cancelled their mentorship request.",
+            notification_type='GENERAL',
+        )
+        messages.success(request, "Mentorship request cancelled.")
+
+    next_url = request.GET.get('next')
+    if next_url:
+        return redirect(next_url)
+    return redirect("accounts:student_dashboard")
+
     
 def my_requests(request):
     if not request.user.is_authenticated or request.user.role != "STUDENT":
@@ -362,22 +473,23 @@ def alumni_requests(request):
     if not request.user.is_authenticated or request.user.role != "ALUMNI":
         return HttpResponseForbidden("Only alumni can view requests.")
 
-    mentorship_requests = MentorshipRequest.objects.filter(alumni=request.user)
+    # Sabhi incoming requests fetch karein select_related ke sath taaki database queries load na badhayein
+    incoming_requests = MentorshipRequest.objects.filter(
+        alumni=request.user
+    ).select_related('student', 'student__student_profile', 'student__institution').order_by('-created_at')
 
-    html = "<h2>Incoming Requests</h2><ul>"
-    for req in mentorship_requests:
-        html += f"""
-        <li>
-        {req.student.username} - {req.status}
-        <a href='{reverse('accounts:accept_request', args=[req.id])}'>Accept</a>
-        <a href='{reverse('accounts:reject_request', args=[req.id])}'>Reject</a>
-        </li>
-        """
+    # Status wise separate kar dete hain taaki template me filter karna easy ho
+    pending_requests = incoming_requests.filter(status='PENDING')
+    processed_requests = incoming_requests.exclude(status='PENDING')
 
-    html += "</ul>"
-    html += f"<br><a href='{reverse('accounts:alumni_dashboard')}'>Back</a>"
-    return HttpResponse(html)
+    context = {
+        "incoming_requests": incoming_requests,
+        "pending_requests": pending_requests,
+        "processed_requests": processed_requests,
+    }
 
+    
+    return render(request, "mentorship/incoming_requests.html", context)
 
 def accept_request(request, request_id):
     if not request.user.is_authenticated or request.user.role != "ALUMNI":
@@ -448,6 +560,45 @@ def reject_request(request, request_id):
      )
    
     return redirect("accounts:alumni_requests")
+
+
+# Ends an ACCEPTED mentorship (marks it COMPLETED). Either the student or the
+# alumni involved in that specific mentorship can trigger this. Once
+# COMPLETED, the student is free to send fresh requests to (up to 5) alumni again.
+def end_mentorship(request, request_id):
+    if not request.user.is_authenticated or request.user.role not in ("STUDENT", "ALUMNI"):
+        return HttpResponseForbidden("Access denied.")
+
+    req = get_object_or_404(MentorshipRequest, id=request_id)
+
+    # Only the two people involved in this mentorship may end it
+    if request.user != req.student and request.user != req.alumni:
+        return HttpResponseForbidden("Not your mentorship.")
+
+    if req.status != "ACCEPTED":
+        messages.error(request, "Only an active mentorship can be marked as completed.")
+    else:
+        req.status = "COMPLETED"
+        req.ended_at = timezone.now()
+        req.save()
+
+        other_party = req.alumni if request.user == req.student else req.student
+        notify(
+            recipient=other_party,
+            sender=request.user,
+            title="Mentorship Ended",
+            message=f"{request.user.get_full_name() or request.user.username} marked your mentorship as completed.",
+            notification_type='GENERAL',
+        )
+        messages.success(request, "Mentorship marked as completed. You can now connect with a new mentor.")
+
+    next_url = request.GET.get('next')
+    if next_url:
+        return redirect(next_url)
+
+    if request.user.role == "STUDENT":
+        return redirect("accounts:my_requests")
+    return redirect("accounts:your_mentees")
 
 
 #------------------------------ VERIFICATION FLOW -----------------------------------------

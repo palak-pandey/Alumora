@@ -180,6 +180,13 @@
               <a href="{% url 'accounts:inbox' %}?user={{ mentee_relation.student.username }}" class="ym-action-link">
                 <i class="far fa-comment-alt"></i> Chat Workspace →
               </a>
+              {% if mentee_relation.status == 'ACCEPTED' %}
+                <a href="{% url 'accounts:end_mentorship' mentee_relation.id %}?next={% url 'accounts:your_mentees' %}"
+                   class="ym-action-link" style="color: var(--danger, #B3261E); margin-left: 14px;"
+                   onclick="return confirm('Mark this mentorship as completed?');">
+                  <i class="fas fa-flag-checkered"></i> End Mentorship
+                </a>
+              {% endif %}
             </div>
           </div>
         </div>

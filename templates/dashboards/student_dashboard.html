@@ -169,9 +169,9 @@
       <div class="sd-stat-icon"><i class="fas fa-user-check"></i></div>
       <div>
         <p class="label">Mentorship Taken</p>
-        <p class="num">{% if accepted_request %}1{% else %}0{% endif %}</p>
+        <p class="num">{{ completed_mentorship_count|default:"0" }}</p>
       </div>
-      <span class="sub-label">Active connections</span>
+      <span class="sub-label">Completed mentorships</span>
     </div>
 
     <!-- 4. Find-mentor CTA Card Slot -->
@@ -259,10 +259,15 @@
           </div>
 
           <div class="sd-row-body" style="flex-grow: 1;">
-            <div class="sd-row-name-line" style="display: flex; align-items: center; gap: 6px; margin-bottom: 3px;">
+            <div class="sd-row-name-line" style="display: flex; align-items: center; gap: 8px; margin-bottom: 3px; flex-wrap: wrap;">
               <span class="sd-row-name" style="font-family: 'DM Sans', sans-serif; font-weight: 700; font-size: 16px; color: var(--sd-text);">
                 {{ alumnus.get_full_name|default:alumnus.username }}
               </span>
+              {% if alumnus.my_request_status == "PENDING" %}
+                <span class="sd-pill pending">Pending</span>
+              {% elif alumnus.my_request_status == "ACCEPTED" %}
+                <span class="sd-pill accepted">Accepted</span>
+              {% endif %}
             </div>
 
             <p class="sd-row-headline" style="font-size: 14px; color: var(--sd-text); margin: 0 0 4px 0; line-height: 1.4;">
@@ -279,14 +284,23 @@
             </p>
 
             <div class="sd-row-actions">
-              {% if alumnus.id in sent_requests %}
-                <span class="ln-action-btn ln-btn-sent"><i class="fas fa-check" style="margin-right: 4px;"></i> Request Sent</span>
-              {% elif total_sent_count >= 5 %}
-                <span class="ln-action-btn ln-btn-disabled">Send Request</span>
-              {% else %}
-                <a href="{% url 'accounts:send_request' alumnus.id %}" class="ln-action-btn ln-btn-active" onclick="alert('Mentorship request successfully sent to {{ alumnus.username }}!');">
+              {% if alumnus.my_request_status == "PENDING" %}
+                <a href="{% url 'accounts:cancel_request' alumnus.my_request_id %}?next={% url 'accounts:student_dashboard' %}"
+                   class="ln-action-btn ln-btn-disabled" style="cursor:pointer; border-color: var(--sd-danger); color: var(--sd-danger); background: var(--sd-danger-bg);"
+                   onclick="return confirm('Cancel this mentorship request?');">
+                  <i class="fas fa-times" style="margin-right: 4px;"></i> Cancel Request
+                </a>
+              {% elif alumnus.my_request_status == "ACCEPTED" %}
+                <span class="ln-action-btn ln-btn-sent"><i class="fas fa-check" style="margin-right: 4px;"></i> Accepted</span>
+              {% elif can_send_request %}
+                <a href="{% url 'accounts:send_request' alumnus.id %}?next={% url 'accounts:student_dashboard' %}" class="ln-action-btn ln-btn-active">
                   <i class="fas fa-paper-plane" style="font-size: 11px; margin-right: 4px;"></i> Send Request
                 </a>
+              {% else %}
+                <span class="ln-action-btn ln-btn-disabled" style="cursor:pointer;"
+                      onclick="alert('{{ send_blocked_message|escapejs }}');">
+                  Send Request
+                </span>
               {% endif %}
             </div>
           </div>

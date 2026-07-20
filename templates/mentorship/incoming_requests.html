@@ -1,0 +1,200 @@
+{% extends 'layouts/base.html' %}
+
+{% block content %}
+<style>
+  :root {
+    --sd-brand:       #0B3D2E;
+    --sd-brand-dark:  #062820;
+    --sd-brand-light: #E4F1EA;
+    --sd-card:        #FFFFFF;
+    --sd-text:        #14231C;
+    --sd-muted:       #5B6B62;
+    --sd-border:      #DCE6E0;
+    --sd-radius:      12px;
+    --sd-shadow:      0 1px 3px rgba(0,0,0,.08), 0 0 0 1px rgba(0,0,0,.03);
+    --sd-amber:       #B7791F;
+    --sd-amber-bg:    #FFF6E5;
+    --sd-danger:      #8C4A3F;
+    --sd-danger-bg:   #F6ECEA;
+    --sd-info:        #2B6CB0;
+    --sd-info-bg:     #EBF8FF;
+  }
+
+  .sd-wrap { font-family: 'DM Sans', sans-serif; color: var(--sd-text); max-width: 900px; margin: 0 auto; }
+
+  .sd-header { margin-bottom: 22px; display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  .sd-header h2 { font-family: 'Sora', sans-serif; font-weight: 700; font-size: 24px; margin: 0 0 4px; }
+  .sd-header p { color: var(--sd-muted); font-size: 14px; margin: 0; }
+  .sd-back-link {
+    font-size: 13px; font-weight: 600; color: var(--sd-brand); text-decoration: none;
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .sd-back-link:hover { color: var(--sd-brand-dark); text-decoration: underline; }
+
+  /* ── Tabs ── */
+  .sd-tabs { display: flex; gap: 8px; margin-bottom: 18px; flex-wrap: wrap; }
+  .sd-tab {
+    background: var(--sd-card); border: 1.5px solid var(--sd-border); color: var(--sd-muted);
+    padding: 7px 16px; border-radius: 20px; font-size: 13px; font-weight: 600; cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .sd-tab:hover { border-color: var(--sd-brand); color: var(--sd-brand); }
+  .sd-tab.active { background: var(--sd-brand); border-color: var(--sd-brand); color: #fff; }
+
+  /* ── Mentorship request list ── */
+  .sd-list { display: flex; flex-direction: column; gap: 10px; }
+  .sd-item {
+    background: var(--sd-card); border-radius: var(--sd-radius); box-shadow: var(--sd-shadow);
+    padding: 16px 20px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+    transition: all 0.2s ease;
+  }
+
+  /* Horizontal Card explicitly for Accepted Mentees */
+  .sd-item.accepted-card {
+    border-left: 5px solid var(--sd-brand);
+    background: linear-gradient(90deg, #ffffff, var(--sd-brand-light));
+  }
+
+  .sd-avatar {
+    width: 46px; height: 46px; border-radius: 50%; flex-shrink: 0; object-fit: cover;
+    background: var(--sd-brand-light); color: var(--sd-brand);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Sora', sans-serif; font-weight: 700; font-size: 15px;
+  }
+  .sd-item-main { flex: 1; min-width: 180px; }
+  .sd-item-name { font-weight: 600; font-size: 14.5px; margin: 0 0 2px 0; }
+  .sd-item-bio { font-size: 13px; color: var(--sd-text); margin: 0; line-height: 1.3; }
+  .sd-item-uni { font-size: 12px; color: var(--sd-muted); margin: 2px 0 0; display: inline-flex; align-items: center; gap: 4px; }
+
+  .sd-action-wrap { display: flex; gap: 8px; }
+  .sd-btn-action {
+    padding: 7px 16px; border-radius: 20px; font-size: 12.5px; font-weight: 700;
+    text-decoration: none !important; border: 1px solid transparent; cursor: pointer; transition: all 0.2s;
+  }
+  .sd-btn-accept { background: var(--sd-brand); color: #fff; }
+  .sd-btn-accept:hover { background: var(--sd-brand-dark); }
+  .sd-btn-reject { background: transparent; border-color: var(--sd-danger); color: var(--sd-danger); }
+  .sd-btn-reject:hover { background: var(--sd-danger-bg); }
+
+  .sd-pill {
+    display: inline-block; padding: 5px 14px; border-radius: 20px;
+    font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .03em;
+  }
+  .sd-pill.pending { background: var(--sd-amber-bg); color: var(--sd-amber); }
+  .sd-pill.accepted { background: var(--sd-brand); color: #fff; }
+  .sd-pill.rejected { background: var(--sd-danger-bg); color: var(--sd-danger); }
+
+  .sd-empty {
+    text-align: center; padding: 48px 20px; color: var(--sd-muted);
+    background: var(--sd-card); border-radius: var(--sd-radius); box-shadow: var(--sd-shadow);
+  }
+  .sd-empty i { font-size: 26px; color: var(--sd-border); display: block; margin-bottom: 8px; }
+</style>
+
+<div class="sd-wrap">
+
+  <div class="sd-header">
+    <div>
+      <h2>Incoming Requests</h2>
+      <p>All mentorship requests sent to you by students.</p>
+    </div>
+    <a href="{% url 'accounts:alumni_dashboard' %}" class="sd-back-link">
+      <i class="fas fa-arrow-left"></i> Back to Dashboard
+    </a>
+  </div>
+
+  <div class="sd-tabs">
+    <button type="button" class="sd-tab active" onclick="irFilter('ALL', this)">All</button>
+    <button type="button" class="sd-tab" onclick="irFilter('ACCEPTED', this)">Accepted</button>
+    <button type="button" class="sd-tab" onclick="irFilter('REJECTED', this)">Rejected</button>
+  </div>
+
+  <div class="sd-list" id="irRequestList">
+    {% for r in incoming_requests %}
+      <div class="sd-item {% if r.status|upper == 'ACCEPTED' %}accepted-card{% endif %}" data-status="{{ r.status|upper }}">
+
+        {% if r.student.student_profile.profile_pic %}
+          <img class="sd-avatar" src="{{ r.student.student_profile.profile_pic.url }}" alt="">
+        {% else %}
+          <div class="sd-avatar">{{ r.student.username|slice:":2"|upper }}</div>
+        {% endif %}
+
+        <div class="sd-item-main">
+          <p class="sd-item-name">
+            {{ r.student.get_full_name|default:r.student.username }}
+            {% if r.status|upper == 'ACCEPTED' %}
+              <span style="font-size: 11px; font-weight: normal; color: var(--sd-brand); margin-left: 6px;">(My Mentee)</span>
+            {% endif %}
+          </p>
+          <p class="sd-item-bio">{{ r.student.student_profile.bio|default:"Aspiring Student Explorer" }}</p>
+          <p class="sd-item-uni"><i class="fas fa-university" style="font-size: 11px;"></i> {{ r.student.institution.name|default:"Global Network Partner" }}</p>
+        </div>
+
+        <div class="sd-action-block">
+          {% if r.status|upper == 'PENDING' %}
+            <div class="sd-action-wrap">
+              <a href="{% url 'accounts:reject_request' r.id %}" class="sd-btn-action sd-btn-reject">Reject</a>
+              <a href="{% url 'accounts:accept_request' r.id %}" class="sd-btn-action sd-btn-accept">Accept</a>
+            </div>
+          {% elif r.status|upper == 'ACCEPTED' %}
+            <span class="sd-pill accepted"><i class="fas fa-user-check"></i> Connected</span>
+          {% elif r.status|upper == 'REJECTED' %}
+            <span class="sd-pill rejected">Rejected</span>
+          {% endif %}
+        </div>
+      </div>
+    {% endfor %}
+
+    <!-- Single empty-state, fully controlled by JS -->
+    <div class="sd-empty" id="irCategoryEmpty" style="display: none;">
+      <i class="far fa-envelope"></i>
+      <p id="irCategoryEmptyText">No requests available.</p>
+    </div>
+  </div>
+
+</div>
+
+<script>
+function irFilter(status, btnElement) {
+  document.querySelectorAll('.sd-tabs .sd-tab').forEach(el => el.classList.remove('active'));
+  btnElement.classList.add('active');
+
+  const items = document.querySelectorAll('#irRequestList .sd-item');
+  const emptyPlaceholder = document.getElementById('irCategoryEmpty');
+  const emptyText = document.getElementById('irCategoryEmptyText');
+
+  let targetStatus = status.trim().toUpperCase();
+  let matchesFound = 0;
+
+  items.forEach(item => {
+    let itemStatus = item.getAttribute('data-status') ? item.getAttribute('data-status').trim().toUpperCase() : '';
+
+    // "All" tab only shows PENDING requests — Accepted/Rejected only live in their own tabs
+    const shouldShow = targetStatus === 'ALL'
+      ? itemStatus === 'PENDING'
+      : itemStatus === targetStatus;
+
+    if (shouldShow) {
+      item.style.setProperty('display', 'flex', 'important');
+      matchesFound++;
+    } else {
+      item.style.setProperty('display', 'none', 'important');
+    }
+  });
+
+  if (matchesFound === 0) {
+    emptyPlaceholder.style.setProperty('display', 'block', 'important');
+    emptyText.textContent = targetStatus === 'ALL'
+      ? 'No new pending requests right now.'
+      : `No requests available in ${status.toLowerCase()} category.`;
+  } else {
+    emptyPlaceholder.style.setProperty('display', 'none', 'important');
+  }
+}
+
+// Sync the empty-state check on page load, since the page opens on the "All" tab
+document.addEventListener('DOMContentLoaded', function () {
+  irFilter('ALL', document.querySelector('.sd-tabs .sd-tab.active'));
+});
+</script>
+{% endblock %}

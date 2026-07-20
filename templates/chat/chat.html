@@ -280,6 +280,16 @@
 
       {% if conversation %}
         <div class="lp-thread-header">
+          <a href="{% url 'accounts:inbox' %}"
+             title="Back to inbox"
+             style="display:inline-flex; align-items:center; justify-content:center;
+                    width:34px; height:34px; border-radius:50%; margin-right:6px;
+                    color:var(--text-muted); text-decoration:none; flex-shrink:0;
+                    transition:background .15s, color .15s;"
+             onmouseover="this.style.background='var(--surface)'; this.style.color='var(--brand)';"
+             onmouseout="this.style.background='transparent'; this.style.color='var(--text-muted)';">
+            <i class="fas fa-arrow-left"></i>
+          </a>
           {% for user in conversation.participants.all %}
             {% if user != request.user %}
               <img class="lp-chat-avatar"

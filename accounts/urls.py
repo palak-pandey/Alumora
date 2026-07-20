@@ -15,10 +15,12 @@ urlpatterns = [
     path('alumni/', views.alumni_list, name='alumni_list'),
 
     path('send_request/<int:alumni_id>/', views.send_request, name='send_request'),
+    path('cancel_request/<int:request_id>/', views.cancel_request, name='cancel_request'),
     path('my_requests/', views.my_requests, name='my_requests'),
     path('alumni_requests/', views.alumni_requests, name='alumni_requests'),
     path('accept_request/<int:request_id>/', views.accept_request, name='accept_request'),
     path('reject_request/<int:request_id>/', views.reject_request, name='reject_request'),
+    path('end_mentorship/<int:request_id>/', views.end_mentorship, name='end_mentorship'),
 
     
     path("faculty_approve/<int:request_id>/", views.faculty_approve, name="faculty_approve"),
