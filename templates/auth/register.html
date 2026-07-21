@@ -1,0 +1,127 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register as Alumni | Alumora</title>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{% static 'plugins/fontawesome-free/css/all.min.css' %}">
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #0A2E22, #103B2B 55%, #145C42);
+            font-family: 'DM Sans', sans-serif;
+            padding: 40px 16px;
+        }
+        .reg-box { width: 100%; max-width: 480px; }
+        .card { border: none; border-radius: 15px; box-shadow: 0 15px 35px rgba(0,0,0,0.25); overflow: hidden; }
+        .card-header {
+            background: #0A2E22; color: #fff; text-align: center; padding: 28px;
+        }
+        .card-header .brand { font-family: 'Sora', sans-serif; font-weight: 700; font-size: 22px; }
+        .card-header small { color: #CFE3DA; }
+        .card-header i { font-size: 34px; margin-bottom: 8px; color: #CFE3DA; }
+        .card-body { padding: 32px; }
+        .form-control { border-radius: 8px; height: 44px; }
+        select.form-control { height: 44px; }
+        .btn-register {
+            background: #145C42; color: #fff; border-radius: 8px; height: 46px; font-weight: 700; border: none;
+        }
+        .btn-register:hover { background: #1c7a58; color: #fff; }
+        .verify-note {
+            background: #FFF9EC; border: 1px solid #F0DFAE; border-radius: 8px;
+            padding: 12px 14px; font-size: 12.5px; color: #6B5C22; margin-bottom: 20px;
+        }
+        .foot-link { text-align: center; font-size: 13px; margin-top: 16px; color: #CFE3DA; }
+        .foot-link a { color: #fff; font-weight: 600; }
+        .errorlist { color: #ffdddd; font-size: 12.5px; list-style: none; padding-left: 0; margin: 4px 0 0; }
+    </style>
+</head>
+<body>
+
+<div class="reg-box">
+    <div class="card">
+        <div class="card-header">
+            <i class="fas fa-user-graduate"></i>
+            <div class="brand">Register as Alumni</div>
+            <small>Alumora Mentorship Platform</small>
+        </div>
+
+        <div class="card-body">
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-info small">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+
+            <div class="verify-note">
+                <i class="fas fa-circle-info mr-1"></i>
+                You'll have <strong>30 days</strong> to verify your degree certificate after registering.
+                Unverified accounts are banned for 30 days, then deleted if still unverified.
+            </div>
+
+            <form method="POST">
+                {% csrf_token %}
+
+                <div class="form-group">
+                    <label>Full name</label>
+                    {{ form.full_name }}
+                    {{ form.full_name.errors }}
+                </div>
+
+                <div class="form-group">
+                    <label>Username</label>
+                    {{ form.username }}
+                    {{ form.username.errors }}
+                </div>
+
+                <div class="form-group">
+                    <label>Email <span class="text-muted" style="font-weight:400;">(optional)</span></label>
+                    {{ form.email }}
+                    {{ form.email.errors }}
+                </div>
+
+                <div class="form-group">
+                    <label>Your university</label>
+                    {{ form.institution }}
+                    {{ form.institution.errors }}
+                </div>
+
+                <div class="form-group">
+                    <label>Password</label>
+                    {{ form.password1 }}
+                    {{ form.password1.errors }}
+                </div>
+
+                <div class="form-group">
+                    <label>Confirm password</label>
+                    {{ form.password2 }}
+                    {{ form.password2.errors }}
+                </div>
+
+                {% if form.non_field_errors %}
+                    <div class="alert alert-danger small">{{ form.non_field_errors }}</div>
+                {% endif %}
+
+                <button type="submit" class="btn btn-register btn-block mt-2">
+                    <i class="fas fa-user-plus mr-1"></i> Create account
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div class="foot-link">
+        Already have an account? <a href="{% url 'accounts:login' %}">Login</a>
+    </div>
+</div>
+
+</body>
+</html>

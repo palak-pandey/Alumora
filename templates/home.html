@@ -1,0 +1,333 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alumora | Alumni Mentorship Platform</title>
+
+    <!-- Bootstrap (same version used on the login page) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
+
+    <!-- FontAwesome (already in the project) -->
+    <link rel="stylesheet" href="{% static 'plugins/fontawesome-free/css/all.min.css' %}">
+
+    <!-- Fonts already used in base.html -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'DM Sans', sans-serif;
+            color: #1F2D27;
+        }
+        h1, h2, h3, h4, .brand-font { font-family: 'Sora', sans-serif; }
+
+        /* ── Navbar: same deep green as the dashboard sidebar ── */
+        .lp-navbar {
+            background-color: #0A2E22;
+            padding: 14px 0;
+        }
+        .lp-navbar .navbar-brand {
+            font-family: 'Sora', sans-serif;
+            font-weight: 700;
+            color: #ffffff;
+            font-size: 21px;
+        }
+        .lp-navbar .nav-link {
+            color: #CFE3DA !important;
+            font-weight: 500;
+            margin: 0 12px;
+        }
+        .lp-navbar .nav-link:hover { color: #ffffff !important; }
+        .btn-lp-outline {
+            border: 1px solid #CFE3DA;
+            color: #ffffff;
+            border-radius: 8px;
+            padding: 6px 18px;
+            font-weight: 600;
+        }
+        .btn-lp-outline:hover { background: rgba(255,255,255,0.08); color: #fff; }
+        .btn-lp-solid {
+            background: #145C42;
+            color: #ffffff;
+            border-radius: 8px;
+            padding: 6px 18px;
+            font-weight: 600;
+            border: 1px solid #145C42;
+        }
+        .btn-lp-solid:hover { background: #1c7a58; color: #fff; }
+
+        /* ── Hero ── */
+        .lp-hero {
+            background: linear-gradient(135deg, #0A2E22, #103B2B 60%, #145C42);
+            color: #ffffff;
+            padding: 90px 0 70px;
+        }
+        .lp-hero h1 { font-size: 40px; font-weight: 700; line-height: 1.25; }
+        .lp-hero p.lead { color: #CFE3DA; font-size: 17px; max-width: 560px; }
+        .lp-hero .btn { padding: 10px 24px; border-radius: 8px; font-weight: 600; }
+
+        /* ── Stat strip (reuses the small-box concept from base.html) ── */
+        .small-box {
+            min-height: 110px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            background: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            padding: 18px 22px;
+            color: #1F2D27;
+        }
+        .small-box .num { font-family: 'Sora', sans-serif; font-weight: 700; font-size: 26px; color: #145C42; }
+        .small-box .lbl { font-size: 13px; color: #6B7A73; margin-top: 2px; }
+
+        /* ── Sections ── */
+        section { padding: 70px 0; }
+        .section-title { font-weight: 700; font-size: 28px; margin-bottom: 8px; }
+        .section-sub { color: #6B7A73; max-width: 560px; margin-bottom: 40px; }
+        .card { border: none; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.07); }
+        .icon-badge {
+            width: 46px; height: 46px; border-radius: 10px;
+            background: #E7F1EC; color: #145C42;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 19px; margin-bottom: 14px;
+        }
+
+        /* ── Governance hierarchy (plain, static) ── */
+        .gov-row { display: flex; justify-content: center; }
+        .gov-node {
+            border: 1px solid #E1E6E3; border-radius: 10px; background: #fff;
+            padding: 14px 22px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        .gov-node.top { background: #0A2E22; color: #fff; border: none; min-width: 200px; }
+        .gov-node .gov-title { font-family: 'Sora', sans-serif; font-weight: 700; font-size: 14.5px; }
+        .gov-node .gov-desc { font-size: 12px; color: #6B7A73; margin-top: 2px; }
+        .gov-node.top .gov-desc { color: #CFE3DA; }
+        .gov-arrow { text-align: center; color: #A9B8B1; margin: 8px 0; font-size: 18px; }
+        .gov-leaf-row { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
+
+        /* ── Mentorship flow ── */
+        .flow-card {
+            background: #F7FAF8; border: 1px solid #E1E6E3; border-radius: 10px;
+            padding: 22px; text-align: center; flex: 1; min-width: 200px;
+        }
+        .flow-badge {
+            display: inline-block; font-family: 'DM Sans'; font-weight: 600; font-size: 11px;
+            letter-spacing: 0.06em; padding: 3px 10px; border-radius: 20px; margin-bottom: 10px;
+        }
+        .flow-badge.pending { background: #FFF3CD; color: #8A6D1D; }
+        .flow-badge.accepted { background: #DDEEE6; color: #145C42; }
+        .flow-badge.completed { background: #DDE7FA; color: #2C4A8A; }
+
+        /* ── Verification notice ── */
+        .verify-card {
+            background: #FFF9EC; border: 1px solid #F0DFAE; border-radius: 10px; padding: 30px;
+        }
+        .verify-step { text-align: center; flex: 1; min-width: 140px; }
+        .verify-step i { font-size: 20px; color: #8A6D1D; margin-bottom: 8px; }
+        .verify-step .vt { font-weight: 700; font-size: 13.5px; }
+        .verify-step .vd { font-size: 12px; color: #6B7A73; margin-top: 3px; }
+
+        footer {
+            background: #072019; color: #A9BDB2; padding: 26px 0; font-size: 13px; text-align: center;
+        }
+        footer a { color: #CFE3DA; }
+        @media (max-width: 767px) {
+            .gov-leaf-row, .flow-row { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar navbar-expand-md lp-navbar">
+    <div class="container">
+        <a class="navbar-brand" href="{% url 'accounts:home' %}">Alumora</a>
+        <div class="collapse navbar-collapse justify-content-between" id="navbarContent">
+            <ul class="navbar-nav ml-4">
+                <li class="nav-item"><a class="nav-link" href="#governance">How it works</a></li>
+                <li class="nav-item"><a class="nav-link" href="#mentorship">Mentorship</a></li>
+                <li class="nav-item"><a class="nav-link" href="#verification">Alumni verification</a></li>
+            </ul>
+            <div>
+                <a href="{% url 'accounts:login' %}" class="btn btn-lp-outline mr-2">Login</a>
+                <a href="{% url 'accounts:register' %}" class="btn btn-lp-solid">Register as alumni</a>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<!-- HERO -->
+<div class="lp-hero">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-7">
+                <h1>Your university's alumni network, in one place.</h1>
+                <p class="lead">Alumora connects students, alumni and faculty across universities — with mentorship requests, sessions and progress tracked from start to finish.</p>
+                <div class="mt-4">
+                    <a href="{% url 'accounts:register' %}" class="btn btn-light font-weight-bold mr-2">
+                        <i class="fas fa-user-graduate mr-1"></i> Register as alumni
+                    </a>
+                    <a href="{% url 'accounts:login' %}" class="btn btn-lp-outline">Login to your account</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-5 pt-3">
+            <div class="col-md-4 mb-3">
+                <div class="small-box">
+                    <div class="num">{{ university_count|default:"—" }}</div>
+                    <div class="lbl">Universities on Alumora</div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-3">
+                <div class="small-box">
+                    <div class="num">{{ verified_alumni_count|default:"—" }}</div>
+                    <div class="lbl">Verified alumni</div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-3">
+                <div class="small-box">
+                    <div class="num">{{ completed_mentorship_count|default:"—" }}</div>
+                    <div class="lbl">Mentorships completed</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- WHO IT'S FOR -->
+<section class="bg-white">
+    <div class="container">
+        <h2 class="section-title">Built for four kinds of users</h2>
+        <p class="section-sub">Every account on Alumora belongs to one role, with its own dashboard and permissions.</p>
+        <div class="row">
+            <div class="col-md-3 col-sm-6 mb-4">
+                <div class="card h-100 p-4">
+                    <div class="icon-badge"><i class="fas fa-user-graduate"></i></div>
+                    <h5 class="font-weight-bold">Students</h5>
+                    <p class="text-muted small mb-0">Browse alumni, send mentorship requests and track sessions.</p>
+                </div>
+            </div>
+            <div class="col-md-3 col-sm-6 mb-4">
+                <div class="card h-100 p-4">
+                    <div class="icon-badge"><i class="fas fa-briefcase"></i></div>
+                    <h5 class="font-weight-bold">Alumni</h5>
+                    <p class="text-muted small mb-0">Accept mentorship requests and guide students once verified.</p>
+                </div>
+            </div>
+            <div class="col-md-3 col-sm-6 mb-4">
+                <div class="card h-100 p-4">
+                    <div class="icon-badge"><i class="fas fa-chalkboard-teacher"></i></div>
+                    <h5 class="font-weight-bold">Faculty</h5>
+                    <p class="text-muted small mb-0">Approve mentorship requests and send notices to students.</p>
+                </div>
+            </div>
+            <div class="col-md-3 col-sm-6 mb-4">
+                <div class="card h-100 p-4">
+                    <div class="icon-badge"><i class="fas fa-university"></i></div>
+                    <h5 class="font-weight-bold">University admins</h5>
+                    <p class="text-muted small mb-0">Manage their own university's accounts and requests.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- GOVERNANCE -->
+<section style="background:#F7FAF8;" id="governance">
+    <div class="container">
+        <h2 class="section-title">How Alumora is governed</h2>
+        <p class="section-sub">One superuser oversees the platform. Each university manages only its own users.</p>
+
+        <div class="gov-row mb-2">
+            <div class="gov-node top">
+                <div class="gov-title">Superuser (Gov)</div>
+                <div class="gov-desc">Oversees every university</div>
+            </div>
+        </div>
+        <div class="gov-arrow"><i class="fas fa-long-arrow-alt-down"></i></div>
+        <div class="gov-leaf-row mb-2">
+            <div class="gov-node"><div class="gov-title">University Admin</div><div class="gov-desc">Runs one institution</div></div>
+            <div class="gov-node"><div class="gov-title">University Admin</div><div class="gov-desc">Runs one institution</div></div>
+            <div class="gov-node"><div class="gov-title">University Admin</div><div class="gov-desc">Runs one institution</div></div>
+        </div>
+        <div class="gov-arrow"><i class="fas fa-long-arrow-alt-down"></i></div>
+        <div class="gov-leaf-row">
+            <div class="gov-node"><div class="gov-title">Alumni</div><div class="gov-desc">Verified graduates</div></div>
+            <div class="gov-node"><div class="gov-title">Students</div><div class="gov-desc">Current students</div></div>
+            <div class="gov-node"><div class="gov-title">Faculty</div><div class="gov-desc">Institution staff</div></div>
+        </div>
+    </div>
+</section>
+
+<!-- MENTORSHIP FLOW -->
+<section class="bg-white" id="mentorship">
+    <div class="container">
+        <h2 class="section-title">Every mentorship is tracked end to end</h2>
+        <p class="section-sub">A request moves through three states — nothing is left open-ended.</p>
+        <div class="d-flex flow-row" style="gap:20px; flex-wrap:wrap;">
+            <div class="flow-card">
+                <span class="flow-badge pending">PENDING</span>
+                <h6 class="font-weight-bold mt-2">Request sent</h6>
+                <p class="text-muted small mb-0">A student requests mentorship from an alumnus.</p>
+            </div>
+            <div class="flow-card">
+                <span class="flow-badge accepted">ACCEPTED</span>
+                <h6 class="font-weight-bold mt-2">Mentorship active</h6>
+                <p class="text-muted small mb-0">The alumnus accepts and sessions can begin.</p>
+            </div>
+            <div class="flow-card">
+                <span class="flow-badge completed">COMPLETED</span>
+                <h6 class="font-weight-bold mt-2">Marked complete</h6>
+                <p class="text-muted small mb-0">Either side closes it out once the mentorship ends.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- VERIFICATION NOTICE -->
+<section style="background:#F7FAF8;" id="verification">
+    <div class="container">
+        <h2 class="section-title">For alumni signing up</h2>
+        <p class="section-sub">Registration is open to alumni. Here's what happens after you register.</p>
+
+        <div class="verify-card">
+            <div class="d-flex" style="gap:20px; flex-wrap:wrap;">
+                <div class="verify-step">
+                    <i class="fas fa-user-plus"></i>
+                    <div class="vt">Day 0 — Registered</div>
+                    <div class="vd">30-day verification window opens.</div>
+                </div>
+                <div class="verify-step">
+                    <i class="fas fa-user-clock"></i>
+                    <div class="vt">Day 30 — Verify deadline</div>
+                    <div class="vd">Unverified accounts get banned, not deleted yet.</div>
+                </div>
+                <div class="verify-step">
+                    <i class="fas fa-user-slash"></i>
+                    <div class="vt">Banned for 30 days</div>
+                    <div class="vd">Verifying within this month lifts the ban.</div>
+                </div>
+                <div class="verify-step">
+                    <i class="fas fa-trash-alt"></i>
+                    <div class="vt">Day 60 — Deleted</div>
+                    <div class="vd">Still unverified after the ban period, the account is removed.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<footer>
+    <div class="container">
+        &copy; 2026 Alumora — Alumni Mentorship Platform ·
+        <a href="{% url 'accounts:login' %}">Login</a> ·
+        <a href="{% url 'accounts:register' %}">Register</a>
+    </div>
+</footer>
+
+</body>
+</html>

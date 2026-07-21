@@ -3,6 +3,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login | Alumora</title>
 
     <!-- Bootstrap -->
@@ -11,6 +12,9 @@
     <!-- FontAwesome -->
     <link rel="stylesheet" href="{% static 'plugins/fontawesome-free/css/all.min.css' %}">
 
+    <!-- Fonts already used elsewhere in the project -->
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+
     <style>
         body {
             margin: 0;
@@ -18,75 +22,61 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            background: linear-gradient(135deg, #1d3557, #457b9d, #a8dadc);
-            background-size: 400% 400%;
-            animation: bgMove 8s ease infinite;
-            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #0A2E22, #103B2B 55%, #145C42);
+            font-family: 'DM Sans', sans-serif;
         }
 
-        @keyframes bgMove {
-            0% {background-position: 0% 50%;}
-            50% {background-position: 100% 50%;}
-            100% {background-position: 0% 50%;}
-        }
+        .login-box { width: 100%; max-width: 420px; }
 
-        .login-box {
-            width: 100%;
-            max-width: 420px;
-        }
-
-        .card {
-            border: none;
-            border-radius: 15px;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.25);
-            overflow: hidden;
-        }
+        .card { border: none; border-radius: 15px; box-shadow: 0 15px 35px rgba(0,0,0,0.25); overflow: hidden; }
 
         .card-header {
-            background: #1d3557;
+            background: #0A2E22;
             color: white;
             text-align: center;
-            padding: 25px;
+            padding: 28px;
         }
 
-        .card-header i {
-            font-size: 40px;
-            margin-bottom: 10px;
+        .card-header .brand {
+            font-family: 'Sora', sans-serif;
+            font-weight: 700;
+            font-size: 22px;
+            margin-top: 6px;
         }
 
-        .card-body {
-            padding: 30px;
-        }
+        .card-header small { color: #CFE3DA; }
+        .card-header i { font-size: 36px; color: #CFE3DA; }
 
-        .form-control {
-            border-radius: 10px;
-            height: 45px;
-        }
+        .card-body { padding: 32px; }
+
+        .form-control { border-radius: 8px; height: 45px; }
 
         .btn-login {
-            background: #1d3557;
+            background: #145C42;
             color: white;
-            border-radius: 10px;
-            height: 45px;
-            font-weight: bold;
+            border-radius: 8px;
+            height: 46px;
+            font-weight: 700;
+            border: none;
         }
+        .btn-login:hover { background: #1c7a58; color: #fff; }
 
-        .btn-login:hover {
-            background: #0f2233;
-        }
+        .msg { font-size: 13px; margin-top: 10px; }
 
-        .msg {
+        .signup-link {
+            text-align: center;
             font-size: 13px;
-            margin-top: 10px;
+            margin-top: 18px;
+            color: #CFE3DA;
         }
+        .signup-link a { color: #ffffff; font-weight: 600; }
 
         .footer-text {
             text-align: center;
             font-size: 12px;
             margin-top: 15px;
-            color: #ddd;
+            color: #A9BDB2;
         }
-
     </style>
 </head>
 
@@ -99,7 +89,7 @@
         <!-- HEADER -->
         <div class="card-header">
             <i class="fas fa-user-graduate"></i>
-            <h4>Alumora Login</h4>
+            <div class="brand">Alumora</div>
             <small>Mentorship Platform</small>
         </div>
 
@@ -130,12 +120,16 @@
                 </button>
             </form>
 
+            <div class="signup-link">
+                New alumnus? <a href="{% url 'accounts:register' %}">Register your account</a>
+            </div>
+
         </div>
 
     </div>
 
     <div class="footer-text">
-        Secure Alumni Mentorship System © Alumora
+        Secure Alumni Mentorship System &copy; Alumora
     </div>
 
 </div>

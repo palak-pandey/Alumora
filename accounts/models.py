@@ -32,6 +32,11 @@ class User(AbstractUser):
     role = models.CharField(max_length=20, choices=ROLE_CHOICES)
     is_verified = models.BooleanField(default=False)
     is_suspended = models.BooleanField(default=False)
+    banned_until = models.DateTimeField(
+        null=True, blank=True,
+        help_text="Set when an unverified alumni account is banned. "
+                  "If still unverified after this date, the account is deleted."
+    )
     created_at = models.DateTimeField(auto_now_add= True)
     updated_at = models.DateTimeField(auto_now= True)
     

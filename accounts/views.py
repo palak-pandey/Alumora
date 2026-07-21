@@ -17,7 +17,7 @@ from django.utils.http import url_has_allowed_host_and_scheme
 from django.db.models import Q
 from django.db import models
 from datetime import datetime
-
+from .forms import AlumniRegisterForm   
 
 # Max number of PENDING mentorship requests a student may have open at once
 MAX_PENDING_MENTORSHIP_REQUESTS = 5
@@ -1225,3 +1225,59 @@ def leave_session_room(request, room_code):
 
     session.save()
     return JsonResponse({'status': 'left', 'current_status': session.status})
+
+
+
+def landing_page(request):
+    """
+    Public home page. Logged-in users skip straight past it, to their own dashboard.
+    """
+    if request.user.is_authenticated:
+        role = (request.user.role or '').upper()
+        if role == 'STUDENT':
+            return redirect('accounts:student_dashboard')
+        elif role == 'ALUMNI':
+            return redirect('accounts:alumni_dashboard')
+        elif role == 'FACULTY':
+            return redirect('accounts:faculty_dashboard')
+        return redirect('accounts:login')
+ 
+    return render(request, 'home.html', {
+        'university_count': Institution.objects.count(),
+        'verified_alumni_count': User.objects.filter(role='ALUMNI', is_verified=True).count(),
+        'completed_mentorship_count': MentorshipRequest.objects.filter(status='COMPLETED').count(),
+    })
+ 
+ 
+def register_alumni(request):
+    """
+    Public sign-up — alumni only. Account is created unverified.
+    Verification itself happens through your existing VerificationRequest flow
+    (degree certificate upload -> faculty/admin approval -> is_verified=True).
+    The 30-day verify / 30-day ban / delete clock is enforced by the
+    enforce_alumni_verification management command (run it daily via cron/Celery beat).
+    """
+    if request.user.is_authenticated:
+        return redirect('accounts:login')
+ 
+    if request.method == "POST":
+        form = AlumniRegisterForm(request.POST)
+        if form.is_valid():
+            user = User.objects.create_user(
+                username=form.cleaned_data['username'],
+                email=form.cleaned_data.get('email') or '',
+                password=form.cleaned_data['password1'],
+                first_name=form.cleaned_data['full_name'],
+                role='ALUMNI',
+                institution=form.cleaned_data['institution'],
+                is_verified=False,
+            )
+            messages.success(
+                request,
+                "Account created. Verify your degree certificate within 30 days to keep it active."
+            )
+            return redirect('accounts:login')
+    else:
+        form = AlumniRegisterForm()
+ 
+    return render(request, 'auth/register.html', {'form': form})
