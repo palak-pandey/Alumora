@@ -24,9 +24,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-&jyf61q-w-scbs!!=^ie67+ofv#6^u66g9v63@@ut7wo8gy&vg'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["*"]
 
 
 # Application definition
@@ -48,6 +48,14 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    
+    'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
+    'django.contrib.sessions.middleware.SessionMiddleware',
+
+
+
+
 ]
 
 ROOT_URLCONF = 'Alumora.urls'
@@ -122,6 +130,7 @@ STATICFILES_DIRS = [
     os.path.join(BASE_DIR, "static")
 ]
 
+STATIC_ROOT = BASE_DIR / "staticfiles"
 AUTH_USER_MODEL = 'accounts.User'
 
 MEDIA_URL = '/media/'
@@ -138,3 +147,9 @@ DEFAULT_FROM_EMAIL = 'Alumora <noreply@alumora.local>'
 # EMAIL_USE_TLS = True
 # EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER')
 # EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')
+
+STORAGES = {
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedStaticFilesStorage",
+    },
+}
