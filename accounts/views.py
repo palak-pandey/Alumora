@@ -874,32 +874,40 @@ def accept_message_request(request, convo_id):
 
 
 # ---------------------- PROFILES ----------------------
+# ---------------------- PROFILES ----------------------
+from .models import StudentProfile, AlumniProfile, FacultyProfile
+
 @login_required(login_url='accounts:login')  
 def view_profile(request):
     user = request.user
     role = None  
     profile_obj = None
 
-    if hasattr(user, 'faculty_profile'):
-        role = 'faculty'
-        profile_obj = user.faculty_profile
-    elif hasattr(user, 'alumni_profile'):
-        role = 'alumni'
-        profile_obj = user.alumni_profile
-    elif hasattr(user, 'student_profile'):
+    # Safely get or create profile based on user role to avoid 500 Error
+    user_role = getattr(user, 'role', '').upper()
+
+    if user_role == 'STUDENT' or hasattr(user, 'student_profile'):
         role = 'student'
-        profile_obj = user.student_profile
+        profile_obj, _ = StudentProfile.objects.get_or_create(user=user)
+    elif user_role == 'ALUMNI' or hasattr(user, 'alumni_profile'):
+        role = 'alumni'
+        profile_obj, _ = AlumniProfile.objects.get_or_create(user=user)
+    elif user_role == 'FACULTY' or hasattr(user, 'faculty_profile'):
+        role = 'faculty'
+        profile_obj, _ = FacultyProfile.objects.get_or_create(user=user)
     else:
-        messages.error(request, "Sorry! You don't have a profile to view.")
-        return redirect('accounts:login')    
-    
+        # Fallback if role is not set
+        profile_obj, _ = StudentProfile.objects.get_or_create(user=user)
+        role = 'student'
+
     context = {
         "role": role,
         "profile": profile_obj,  
         role: profile_obj        
     }
 
-    template_name = "profiles/student_profile.html"
+    # Dynamic template based on role
+    template_name = f"profiles/{role}_profile.html"
     return render(request, template_name, context)
 
 
@@ -910,21 +918,20 @@ def edit_profile(request):
     profile_obj = None
     FormClass = None
 
-    if hasattr(user, 'faculty_profile'):
+    user_role = getattr(user, 'role', '').upper()
+
+    if user_role == 'FACULTY' or hasattr(user, 'faculty_profile'):
         role = 'faculty'
-        profile_obj = user.faculty_profile
+        profile_obj, _ = FacultyProfile.objects.get_or_create(user=user)
         FormClass = FacultyProfileForm
-    elif hasattr(user, 'alumni_profile'):
+    elif user_role == 'ALUMNI' or hasattr(user, 'alumni_profile'):
         role = 'alumni'
-        profile_obj = user.alumni_profile
+        profile_obj, _ = AlumniProfile.objects.get_or_create(user=user)
         FormClass = AlumniProfileForm
-    elif hasattr(user, 'student_profile'):
-        role = 'student'
-        profile_obj = user.student_profile
-        FormClass = StudentProfileForm
     else:
-        messages.error(request, "Sorry! You don't have access to this page.")
-        return redirect('accounts:login')
+        role = 'student'
+        profile_obj, _ = StudentProfile.objects.get_or_create(user=user)
+        FormClass = StudentProfileForm
     
     if request.method == 'POST':
         profile_obj.bio = request.POST.get('bio', profile_obj.bio)
@@ -936,36 +943,36 @@ def edit_profile(request):
             profile_obj.cover_photo = request.FILES.get('cover_photo')
 
         if role == 'student':
-            profile_obj.department = request.POST.get('department', profile_obj.department)
-            profile_obj.batch_year = request.POST.get('batch_year', profile_obj.batch_year)
+            profile_obj.department = request.POST.get('department', getattr(profile_obj, 'department', ''))
+            profile_obj.batch_year = request.POST.get('batch_year', getattr(profile_obj, 'batch_year', ''))
             profile_obj.skills = request.POST.get('skills', getattr(profile_obj, 'skills', ''))
             
         elif role == 'alumni':
-            profile_obj.current_company = request.POST.get('current_company', profile_obj.current_company)
-            profile_obj.job_title = request.POST.get('job_title', profile_obj.job_title)
-            profile_obj.current_join_year = request.POST.get('current_join_year', profile_obj.current_join_year)
+            profile_obj.current_company = request.POST.get('current_company', getattr(profile_obj, 'current_company', ''))
+            profile_obj.job_title = request.POST.get('job_title', getattr(profile_obj, 'job_title', ''))
+            profile_obj.current_join_year = request.POST.get('current_join_year', getattr(profile_obj, 'current_join_year', ''))
             profile_obj.skills = request.POST.get('skills', getattr(profile_obj, 'skills', ''))
             
-            profile_obj.recent_degree = request.POST.get('recent_degree', profile_obj.recent_degree)
-            profile_obj.batch = request.POST.get('batch', profile_obj.batch)
-            profile_obj.past_university1 = request.POST.get('past_university1', profile_obj.past_university1)
-            profile_obj.past_degree_course1 = request.POST.get('past_degree_course1', profile_obj.past_degree_course1)
-            profile_obj.batch1 = request.POST.get('batch1', profile_obj.batch1)
+            profile_obj.recent_degree = request.POST.get('recent_degree', getattr(profile_obj, 'recent_degree', ''))
+            profile_obj.batch = request.POST.get('batch', getattr(profile_obj, 'batch', ''))
+            profile_obj.past_university1 = request.POST.get('past_university1', getattr(profile_obj, 'past_university1', ''))
+            profile_obj.past_degree_course1 = request.POST.get('past_degree_course1', getattr(profile_obj, 'past_degree_course1', ''))
+            profile_obj.batch1 = request.POST.get('batch1', getattr(profile_obj, 'batch1', ''))
 
         elif role == 'faculty':
-            profile_obj.department = request.POST.get('department', profile_obj.department)
-            profile_obj.current_designation = request.POST.get('current_designation', profile_obj.current_designation)
-            profile_obj.current_join_year = request.POST.get('current_join_year', profile_obj.current_join_year)
-            profile_obj.research_publications = request.POST.get('research_publications', profile_obj.research_publications)
+            profile_obj.department = request.POST.get('department', getattr(profile_obj, 'department', ''))
+            profile_obj.current_designation = request.POST.get('current_designation', getattr(profile_obj, 'current_designation', ''))
+            profile_obj.current_join_year = request.POST.get('current_join_year', getattr(profile_obj, 'current_join_year', ''))
+            profile_obj.research_publications = request.POST.get('research_publications', getattr(profile_obj, 'research_publications', ''))
 
         if role in ['faculty', 'alumni']:
-            profile_obj.past_company_1 = request.POST.get('past_company_1', profile_obj.past_company_1)
-            profile_obj.past_designation_1 = request.POST.get('past_designation_1', profile_obj.past_designation_1)
-            profile_obj.past_timeline_1 = request.POST.get('past_timeline_1', profile_obj.past_timeline_1)
+            profile_obj.past_company_1 = request.POST.get('past_company_1', getattr(profile_obj, 'past_company_1', ''))
+            profile_obj.past_designation_1 = request.POST.get('past_designation_1', getattr(profile_obj, 'past_designation_1', ''))
+            profile_obj.past_timeline_1 = request.POST.get('past_timeline_1', getattr(profile_obj, 'past_timeline_1', ''))
             
-            profile_obj.past_company_2 = request.POST.get('past_company_2', profile_obj.past_company_2)
-            profile_obj.past_designation_2 = request.POST.get('past_designation_2', profile_obj.past_designation_2)
-            profile_obj.past_timeline_2 = request.POST.get('past_timeline_2', profile_obj.past_timeline_2)
+            profile_obj.past_company_2 = request.POST.get('past_company_2', getattr(profile_obj, 'past_company_2', ''))
+            profile_obj.past_designation_2 = request.POST.get('past_designation_2', getattr(profile_obj, 'past_designation_2', ''))
+            profile_obj.past_timeline_2 = request.POST.get('past_timeline_2', getattr(profile_obj, 'past_timeline_2', ''))
 
         profile_obj.save()
         
