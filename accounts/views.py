@@ -1190,22 +1190,31 @@ def session_room(request, room_code):
     if request.user != session.creator and request.user != session.participant:
         return HttpResponseForbidden("Unauthorized member.")
 
-    if session.status in ['COMPLETED', 'CANCELLED']:
+    # CANCELLED is a real, deliberate dead-end — always blocked.
+    if session.status == 'CANCELLED':
         messages.error(request, "This session room is closed forever.")
         return redirect('accounts:sessions_dashboard')
 
-    # Status activation on active entry
-    if session.status == 'SCHEDULED':
-        session.status = 'ACTIVE'
-
-    # User entered: mark THIS specific user (creator or participant) as
-    # present in the room. Tied to who they are, not to a generic counter,
-    # so refresh/reload is naturally safe (setting True again is a no-op)
-    # and it can never get confused with the other person's presence.
+    # Mark THIS specific user (creator or participant) as present in the
+    # room FIRST, before deciding anything about status. This has to
+    # happen before the COMPLETED check below — otherwise a page reload
+    # (which fires beforeunload -> a "leave" call -> can momentarily flip
+    # both people to "absent" -> COMPLETED, right before the reloading
+    # tab's own new request lands) would get incorrectly bounced out with
+    # a "session closed" error, even though this same user is genuinely
+    # rejoining a second later.
     if request.user == session.creator:
         session.creator_in_room = True
     elif request.user == session.participant:
         session.participant_in_room = True
+
+    if session.status == 'COMPLETED':
+        # Genuinely ended (both sides confirmed gone) — that can't be true
+        # right now since we just marked ourselves present above, so this
+        # is exactly the reload-race case: revive it instead of blocking.
+        session.status = 'ACTIVE'
+    elif session.status == 'SCHEDULED':
+        session.status = 'ACTIVE'
 
     session.save()
 
