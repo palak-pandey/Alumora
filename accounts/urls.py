@@ -44,6 +44,8 @@ urlpatterns = [
     path('sessions/', views.sessions_dashboard, name='sessions_dashboard'),
     path('sessions/room/<str:room_code>/', views.session_room, name='session_room'),
     path('sessions/leave/<str:room_code>/', views.leave_session_room, name='leave_session_room'),
+    path('sessions/signal/send/<str:room_code>/', views.post_session_signal, name='post_session_signal'),
+    path('sessions/signal/poll/<str:room_code>/', views.get_session_signals, name='get_session_signals'),
 
 
 

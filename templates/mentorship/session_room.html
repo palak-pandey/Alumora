@@ -71,13 +71,151 @@ let localStream = null;
 let audioEnabled = true;
 let videoEnabled = true;
 
+// ---- WebRTC state ----
+const ROOM_CODE = "{{ room_code }}";
+const IS_INITIATOR = {{ is_initiator }};   // creator hamesha offer bhejta hai, participant hamesha answer karta hai
+let peerConnection = null;
+let lastSignalId = 0;
+let pollTimer = null;
+let remoteConnected = false;
+
+const SIGNAL_SEND_URL = "/sessions/signal/send/{{ room_code }}/";
+const SIGNAL_POLL_URL = "/sessions/signal/poll/{{ room_code }}/";
+const CSRF_TOKEN = "{{ csrf_token }}";
+
 async function initMediaDevices() {
     try {
         localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
         document.getElementById('localVideo').srcObject = localStream;
+        startCall();
     } catch (error) {
         console.error("Media Device Permission Hook Failed:", error);
         alert("Microphone ya Camera hardware stream fetch karne me samasya aayi. Kripya check karein permissions allowed hain.");
+    }
+}
+
+// ---- Peer connection setup ----
+function createPeerConnection() {
+    peerConnection = new RTCPeerConnection({
+        iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+    });
+
+    localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
+
+    peerConnection.onicecandidate = (event) => {
+        if (event.candidate) {
+            postSignal('candidate', event.candidate.toJSON());
+        }
+    };
+
+    peerConnection.ontrack = (event) => {
+        const remoteVideoEl = document.getElementById('remoteVideo');
+        if (remoteVideoEl.srcObject !== event.streams[0]) {
+            remoteVideoEl.srcObject = event.streams[0];
+        }
+        remoteConnected = true;
+        document.getElementById('remotePlaceholder').classList.add('d-none');
+    };
+
+    peerConnection.onconnectionstatechange = () => {
+        if (['disconnected', 'failed', 'closed'].includes(peerConnection.connectionState)) {
+            remoteConnected = false;
+            document.getElementById('remotePlaceholder').classList.remove('d-none');
+        }
+    };
+}
+
+async function startCall() {
+    createPeerConnection();
+    if (IS_INITIATOR) {
+        await makeOffer();
+    }
+    pollTimer = setInterval(pollSignals, 1500);
+}
+
+async function makeOffer() {
+    const offer = await peerConnection.createOffer();
+    await peerConnection.setLocalDescription(offer);
+    postSignal('offer', offer);
+}
+
+// ---- Signaling: send / poll ----
+async function postSignal(type, data) {
+    try {
+        await fetch(SIGNAL_SEND_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': CSRF_TOKEN
+            },
+            body: JSON.stringify({ type: type, data: data })
+        });
+    } catch (err) {
+        console.error("Signal bhejne mein error:", err);
+    }
+}
+
+async function pollSignals() {
+    try {
+        const res = await fetch(`${SIGNAL_POLL_URL}?since=${lastSignalId}`);
+        if (!res.ok) return;
+        const payload = await res.json();
+        lastSignalId = payload.last_id;
+
+        if (!remoteConnected) {
+            const label = document.querySelector('#remotePlaceholder span');
+            if (label) {
+                label.textContent = payload.peer_in_room
+                    ? "Peer connected, connecting video..."
+                    : "Waiting for peer connection...";
+            }
+        }
+
+        for (const sig of payload.signals) {
+            await handleIncomingSignal(sig);
+        }
+
+        if (payload.session_status === 'COMPLETED') {
+            stopEverything();
+            alert("Doosra participant session se nikal gaya hai. Call khatam ho rahi hai.");
+            window.location.href = "{% url 'accounts:sessions_dashboard' %}";
+        }
+    } catch (err) {
+        console.error("Signal poll error:", err);
+    }
+}
+
+async function handleIncomingSignal(sig) {
+    if (!peerConnection) return;
+    try {
+        if (sig.type === 'offer') {
+            await peerConnection.setRemoteDescription(new RTCSessionDescription(sig.data));
+            const answer = await peerConnection.createAnswer();
+            await peerConnection.setLocalDescription(answer);
+            postSignal('answer', answer);
+        } else if (sig.type === 'answer') {
+            if (peerConnection.signalingState !== 'stable') {
+                await peerConnection.setRemoteDescription(new RTCSessionDescription(sig.data));
+            }
+        } else if (sig.type === 'candidate') {
+            await peerConnection.addIceCandidate(new RTCIceCandidate(sig.data));
+        }
+    } catch (err) {
+        console.error("Signal handle error:", err);
+    }
+}
+
+function stopEverything() {
+    if (pollTimer) {
+        clearInterval(pollTimer);
+        pollTimer = null;
+    }
+    if (peerConnection) {
+        peerConnection.close();
+        peerConnection = null;
+    }
+    if (localStream) {
+        localStream.getTracks().forEach(track => track.stop());
     }
 }
 
@@ -125,6 +263,7 @@ function toggleVideoStream() {
 
 // Custom Exit Handling Hooks
 function exitCallManually() {
+    stopEverything();
     fetch("/sessions/leave/{{ room_code }}/", {
         method: 'POST',
         headers: {
@@ -140,6 +279,7 @@ function exitCallManually() {
 
 // Tab cut closure handling using beacon
 window.addEventListener('beforeunload', function (e) {
+    stopEverything();
     const fd = new FormData();
     fd.append('csrfmiddlewaretoken', '{{ csrf_token }}');
     navigator.sendBeacon("/sessions/leave/{{ room_code }}/", fd);

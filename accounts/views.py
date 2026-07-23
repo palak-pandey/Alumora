@@ -1,12 +1,13 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
-from django.http import HttpResponse, HttpResponseForbidden
+from django.http import HttpResponse, HttpResponseForbidden, JsonResponse
 from django.core.paginator import Paginator
 from .models import User, Institution, MentorshipRequest
 from django.shortcuts import get_object_or_404 
 from django.urls import reverse
-from .models import VerificationRequest, StudentProfile, AlumniProfile, FacultyProfile, MentorshipSession
+from .models import VerificationRequest, StudentProfile, AlumniProfile, FacultyProfile, MentorshipSession, SessionSignal
+import json
 from .models import Conversation , Message
 from django.utils import timezone
 from .forms import StudentProfileForm, FacultyProfileForm,AlumniProfileForm,FacultyNotificationForm,VerificationRequestForm
@@ -1197,18 +1198,28 @@ def session_room(request, room_code):
     if session.status == 'SCHEDULED':
         session.status = 'ACTIVE'
 
-    # User entered: increment active_users_count only once per browser
-    # session for this room (prevents refresh/reload from inflating the count)
-    session_flag_key = f'joined_session_{room_code}'
-    if not request.session.get(session_flag_key):
-        session.active_users_count += 1
-        request.session[session_flag_key] = True
+    # User entered: mark THIS specific user (creator or participant) as
+    # present in the room. Tied to who they are, not to a generic counter,
+    # so refresh/reload is naturally safe (setting True again is a no-op)
+    # and it can never get confused with the other person's presence.
+    if request.user == session.creator:
+        session.creator_in_room = True
+    elif request.user == session.participant:
+        session.participant_in_room = True
 
     session.save()
+
+    is_creator = (request.user == session.creator)
+    peer_already_in_room = session.participant_in_room if is_creator else session.creator_in_room
 
     context = {
         'session': session,
         'room_code': room_code,
+        # Creator hamesha WebRTC "offer" bhejne wala (initiator) hota hai,
+        # participant hamesha "answer" karta hai — dono side ko pata rehta
+        # hai unhe kaunsa role play karna hai.
+        'is_initiator': 'true' if is_creator else 'false',
+        'peer_already_in_room': 'true' if peer_already_in_room else 'false',
     }
     return render(request, 'mentorship/session_room.html', context)
 
@@ -1220,19 +1231,85 @@ def leave_session_room(request, room_code):
     if session.status in ['COMPLETED', 'CANCELLED']:
         return JsonResponse({'status': 'already_closed', 'current_status': session.status})
 
-    session_flag_key = f'joined_session_{room_code}'
-    if request.session.get(session_flag_key):
-        if session.active_users_count > 0:
-            session.active_users_count -= 1
-        del request.session[session_flag_key]
+    if request.user == session.creator:
+        session.creator_in_room = False
+    elif request.user == session.participant:
+        session.participant_in_room = False
 
-    if session.active_users_count <= 0:
-        session.active_users_count = 0
+    # Session ends ONLY when BOTH people have actually left the room —
+    # not just whoever happened to trigger this request.
+    if not session.creator_in_room and not session.participant_in_room:
         session.status = 'COMPLETED'
 
     session.save()
     return JsonResponse({'status': 'left', 'current_status': session.status})
 
+
+@login_required
+def post_session_signal(request, room_code):
+    """
+    Doosra participant tak WebRTC handshake message (offer/answer/ICE
+    candidate) pahunchane ke liye — sender apna message yaha POST karta
+    hai, dusra side isko get_session_signals se poll karke uthaata hai.
+    """
+    if request.method != 'POST':
+        return HttpResponseForbidden("Invalid method.")
+
+    session = get_object_or_404(MentorshipSession, session_code=room_code)
+    if request.user != session.creator and request.user != session.participant:
+        return HttpResponseForbidden("Unauthorized member.")
+
+    try:
+        body = json.loads(request.body.decode('utf-8'))
+        signal_type = body.get('type')
+        data = body.get('data')
+    except (ValueError, TypeError, UnicodeDecodeError):
+        return JsonResponse({'status': 'error', 'message': 'Invalid payload'}, status=400)
+
+    if signal_type not in ('offer', 'answer', 'candidate') or data is None:
+        return JsonResponse({'status': 'error', 'message': 'Invalid signal type'}, status=400)
+
+    SessionSignal.objects.create(
+        session=session,
+        sender=request.user,
+        signal_type=signal_type,
+        payload=json.dumps(data),
+    )
+    return JsonResponse({'status': 'ok'})
+
+
+@login_required
+def get_session_signals(request, room_code):
+    """
+    Peer ke bheje hue naye signaling messages poll karke wapas bhejta hai
+    (apne khud ke bheje hue signals exclude karke), saath mein yeh bhi
+    batata hai ki peer abhi room mein present hai ya nahi.
+    """
+    session = get_object_or_404(MentorshipSession, session_code=room_code)
+    if request.user != session.creator and request.user != session.participant:
+        return HttpResponseForbidden("Unauthorized member.")
+
+    try:
+        since_id = int(request.GET.get('since', 0))
+    except (TypeError, ValueError):
+        since_id = 0
+
+    new_signals = list(
+        session.signals.filter(id__gt=since_id).exclude(sender=request.user).order_by('id')
+    )
+
+    is_creator = (request.user == session.creator)
+    peer_in_room = session.participant_in_room if is_creator else session.creator_in_room
+
+    return JsonResponse({
+        'signals': [
+            {'id': s.id, 'type': s.signal_type, 'data': json.loads(s.payload)}
+            for s in new_signals
+        ],
+        'last_id': new_signals[-1].id if new_signals else since_id,
+        'peer_in_room': peer_in_room,
+        'session_status': session.status,
+    })
 
 
 def landing_page(request):

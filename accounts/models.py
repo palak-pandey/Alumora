@@ -594,10 +594,45 @@ class MentorshipSession(models.Model):
     
     status = models.CharField(max_length=15, choices=STATUS_CHOICES, default='SCHEDULED')
     
-    # NEW FIELDS: Active users count track karne ke liye
-    active_users_count = models.IntegerField(default=0)
+    # Presence tracking: har user (creator/participant) ka apna flag,
+    # taaki session tabhi COMPLETED ho jab dono explicitly room chhod chuke ho.
+    # (Purana shared counter approach isliye hata diya kyunki wo sirf ek
+    # number track karta tha, YEH nahi ki kaun room mein hai — agar kabhi
+    # counter out-of-sync ho jaye (refresh, multiple tabs, alag-alag device
+    # session behavior), toh sirf ek user ke leave karne se hi poora session
+    # COMPLETED ho sakta tha, chahe doosra abhi bhi room mein ho.)
+    creator_in_room = models.BooleanField(default=False)
+    participant_in_room = models.BooleanField(default=False)
     
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f"Session {self.session_code} ({self.status})"
+
+
+class SessionSignal(models.Model):
+    """
+    WebRTC signaling messages (offer / answer / ICE candidates) for a
+    MentorshipSession, exchanged via simple HTTP polling since the project
+    has no WebSocket/Channels layer set up. The actual audio/video still
+    flows peer-to-peer directly between the two browsers — this table is
+    only used to hand each side the small handshake messages needed to
+    establish that direct connection.
+    """
+    SIGNAL_TYPES = [
+        ('offer', 'Offer'),
+        ('answer', 'Answer'),
+        ('candidate', 'ICE Candidate'),
+    ]
+
+    session = models.ForeignKey(MentorshipSession, on_delete=models.CASCADE, related_name='signals')
+    sender = models.ForeignKey(User, on_delete=models.CASCADE)
+    signal_type = models.CharField(max_length=10, choices=SIGNAL_TYPES)
+    payload = models.TextField()  # JSON-encoded SDP or ICE candidate data
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['id']
+
+    def __str__(self):
+        return f"{self.signal_type} from {self.sender.username} in {self.session.session_code}"
