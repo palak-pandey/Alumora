@@ -5,7 +5,6 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=DM+Sans:wght@400;500&display=swap">
-
 {% endblock %}
 
 {% block content %}
@@ -57,7 +56,7 @@
     background: var(--card-bg);
     border-radius: var(--radius);
     box-shadow: var(--shadow);
-    margin-bottom: 12px;
+    margin-bottom: 16px;
     overflow: hidden;
   }
 
@@ -86,7 +85,7 @@
     padding: 16px 24px 20px;
   }
 
-  /* ── Field row: 2-column grid ────────────────────────── */
+  /* ── Field row: Grid ─────────────────────────────────── */
   .ep-grid-2 {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -100,58 +99,45 @@
   }
 
   /* ── Form group ──────────────────────────────────────── */
-  .ep-form-group { display: flex; flex-direction: column; }
+  .ep-form-group { display: flex; flex-direction: column; margin-bottom: 12px; }
 
   .ep-label {
     font-size: 11px; font-weight: 600; letter-spacing: .06em;
     text-transform: uppercase; color: var(--text-muted);
     margin-bottom: 5px;
   }
-  .ep-label .ep-required {
-    color: #C0392B; margin-left: 2px;
-  }
 
-  /* ── Input overrides (AdminLTE uses .form-control) ───── */
-  .ep-form-group input.form-control,
-  .ep-form-group select.form-control,
-  .ep-form-group textarea.form-control {
+  /* ── Input Overrides ─────────────────────────────────── */
+  .ep-section-body input.ep-input,
+  .ep-section-body select.ep-input,
+  .ep-section-body textarea.ep-input,
+  .ep-section-body input.form-control,
+  .ep-section-body select.form-control,
+  .ep-section-body textarea.form-control {
+    width: 100% !important;
     border: 1.5px solid var(--border) !important;
     border-radius: 8px !important;
     padding: 10px 14px !important;
     font-size: 14px !important;
     font-family: 'DM Sans', sans-serif !important;
     color: var(--text-primary) !important;
-    background: #fff !important;
+    background: #ffffff !important;
+    box-sizing: border-box !important;
     box-shadow: none !important;
     transition: border-color .2s, box-shadow .2s !important;
-    height: auto !important;
   }
-  .ep-form-group input.form-control:focus,
-  .ep-form-group select.form-control:focus,
-  .ep-form-group textarea.form-control:focus {
+
+  .ep-section-body input:focus, 
+  .ep-section-body textarea:focus,
+  .ep-section-body select:focus {
     border-color: var(--brand) !important;
-    box-shadow: 0 0 0 3px rgba(10,102,194,.12) !important;
+    box-shadow: 0 0 0 3px rgba(11,61,46,.12) !important;
     outline: none !important;
-  }
-  .ep-form-group input.form-control.is-invalid,
-  .ep-form-group select.form-control.is-invalid,
-  .ep-form-group textarea.form-control.is-invalid {
-    border-color: #C0392B !important;
-    box-shadow: 0 0 0 3px rgba(192,57,43,.10) !important;
   }
 
   .ep-help-text {
     font-size: 11px; color: var(--text-muted);
     margin-top: 4px; line-height: 1.4;
-  }
-  .ep-error {
-    font-size: 11px; color: #C0392B;
-    margin-top: 4px; display: flex; align-items: center; gap: 4px;
-  }
-
-  /* ── Divider ─────────────────────────────────────────── */
-  .ep-divider {
-    border: none; border-top: 1px solid var(--border); margin: 0 24px;
   }
 
   /* ── File input zone ─────────────────────────────────── */
@@ -163,262 +149,53 @@
     cursor: pointer; transition: border-color .2s, background .2s;
   }
   .ep-file-zone:hover { border-color: var(--brand); background: var(--brand-light); }
-  .ep-file-zone input[type="file"] { display: none; }
-  .ep-file-icon {
-    width: 40px; height: 40px; border-radius: 8px;
-    background: var(--brand-light); display: flex; align-items: center; justify-content: center;
-    flex-shrink: 0;
-  }
-  .ep-file-icon i { color: var(--brand); font-size: 18px; }
-  .ep-file-label { font-size: 13px; color: var(--text-muted); line-height: 1.4; }
-  .ep-file-label strong { display: block; color: var(--text-primary); font-size: 14px; margin-bottom: 2px; }
-
-  /* ── Avatar preview ──────────────────────────────────── */
-  .ep-avatar-row {
-    display: flex; align-items: center; gap: 16px; margin-bottom: 14px;
-  }
-  .ep-avatar-preview {
-    width: 72px; height: 72px; border-radius: 50%;
-    border: 3px solid #fff; box-shadow: var(--shadow);
-    object-fit: cover; background: #ddd; flex-shrink: 0;
-  }
+  .ep-file-zone input[type="file"] { display: none !important; }
 
   /* ── Action bar (sticky footer) ──────────────────────── */
   .ep-action-bar {
     background: var(--card-bg);
     border-radius: var(--radius);
-    box-shadow: var(--shadow);
+    box-shadow: 0 -2px 10px rgba(0,0,0,.08);
     padding: 16px 24px;
     display: flex; align-items: center; justify-content: space-between;
     gap: 12px; flex-wrap: wrap;
     position: sticky; bottom: 16px;
     z-index: 100;
   }
-  .ep-action-left {
-    font-size: 13px; color: var(--text-muted);
-    display: flex; align-items: center; gap: 6px;
-  }
 
   /* ── Buttons ─────────────────────────────────────────── */
   .ep-btn-primary {
     display: inline-flex; align-items: center; gap: 7px;
-    background: var(--brand); color: #fff;
+    background: var(--brand); color: #fff !important;
     padding: 10px 26px; border-radius: 20px;
     font-size: 14px; font-weight: 600; border: none; cursor: pointer;
-    text-decoration: none; transition: background .2s, transform .1s;
-    font-family: 'DM Sans', sans-serif;
+    text-decoration: none; transition: background .2s;
   }
-  .ep-btn-primary:hover { background: var(--brand-dark); color: #fff; transform: translateY(-1px); }
-  .ep-btn-primary:active { transform: translateY(0); }
+  .ep-btn-primary:hover { background: var(--brand-dark); }
 
   .ep-btn-outline {
     display: inline-flex; align-items: center; gap: 7px;
-    background: transparent; color: var(--text-muted);
+    background: transparent; color: var(--text-muted) !important;
     padding: 9px 20px; border-radius: 20px;
     font-size: 14px; font-weight: 500;
     border: 1.5px solid var(--border); cursor: pointer;
-    text-decoration: none; transition: background .15s, border-color .15s, color .15s;
-    font-family: 'DM Sans', sans-serif;
+    text-decoration: none;
   }
-  .ep-btn-outline:hover {
-    background: var(--surface); color: var(--text-primary);
-    border-color: #bbb;
-  }
+  .ep-btn-outline:hover { background: var(--surface); color: var(--text-primary) !important; }
 
-  /* ── Alert ───────────────────────────────────────────── */
   .ep-alert {
-    display: flex; align-items: flex-start; gap: 10px;
+    display: flex; align-items: center; gap: 10px;
     padding: 12px 16px; border-radius: 8px; margin-bottom: 16px;
-    font-size: 13px;
-  }
-  .ep-alert-info {
-    background: var(--brand-light); color: var(--brand-dark);
+    font-size: 13px; background: var(--brand-light); color: var(--brand-dark);
     border-left: 3px solid var(--brand);
   }
-  .ep-alert i { margin-top: 1px; flex-shrink: 0; }
-
-  /* ── Progress indicator ──────────────────────────────── */
-  .ep-progress-bar-wrap {
-    height: 4px; background: var(--border); border-radius: 2px;
-    overflow: hidden; margin-bottom: 20px;
-  }
-  .ep-progress-bar {
-    height: 100%; background: var(--brand);
-    border-radius: 2px; transition: width .3s;
-  }
-
-
-
-/* ════════════════════════════════════════════════════════════
-     BUG FIX OVERRIDES (Fixes Boxes, Work Exp Cards, and Photos)
-     ════════════════════════════════════════════════════════════ */
-
-  /* 1. Force Clear Visibility on ALL Input & Textarea Fields (Fixes Screenshot 140317 & 140330) */
-  .ep-section-body input, 
-  .ep-section-body textarea, 
-  .ep-section-body select {
-    width: 100% !important;
-    border: 1.5px solid var(--border) !important;
-    border-radius: 8px !important;
-    padding: 10px 14px !important;
-    font-size: 14px !important;
-    font-family: 'DM Sans', sans-serif !important;
-    color: var(--text-primary) !important;
-    background: #ffffff !important;
-    box-sizing: border-box !important;
-    margin-top: 4px !important;
-    margin-bottom: 12px !important;
-    display: block !important;
-    box-shadow: none !important;
-    transition: border-color .2s, box-shadow .2s !important;
-  }
-
-  .ep-section-body input:focus, 
-  .ep-section-body textarea:focus {
-    border-color: var(--brand) !important;
-    box-shadow: 0 0 0 3px rgba(10,102,194,.12) !important;
-    outline: none !important;
-  }
-
-  /* 2. Strict Fix for Photo Inputs & Alignment (Fixes Screenshot 140300) */
-  .ep-avatar-row label.ep-file-zone {
-    margin-bottom: 0 !important;
-    flex: 1;
-  }
-  /* Explicitly target and hide any leakage of native browser choose file string button */
-  .ep-avatar-row input[type="file"],
-  .ep-file-zone input[type="file"] {
-    display: none !important;
-    visibility: hidden !important;
-    opacity: 0 !important;
-    width: 0 !important;
-    height: 0 !important;
-  }
-
-  /* 3. Sub-sections and Past Experience Divider Spacing */
-  .ep-section-body p strong {
-    font-size: 12px;
-    font-weight: 700;
-    color: var(--text-muted);
-    text-transform: uppercase;
-    letter-spacing: .05em;
-    display: inline-block;
-    margin-top: 8px;
-  }  
-
-/* ==========================================
-   FINAL PIXEL-PERFECT LAYOUT OVERRIDES 
-   ========================================== */
-
-/* 1. Clear Photo Section Reset (Fixes Hidden Native Inputs) */
-.ep-avatar-row {
-  display: flex !important;
-  align-items: center !important;
-  gap: 16px !important;
-  margin-bottom: 16px !important;
-}
-.ep-file-zone input[type="file"],
-#id_profile_pic_upload,
-#id_cover_photo_upload {
-  display: none !important;
-  opacity: 0 !important;
-  position: absolute !important;
-  width: 0 !important;
-  height: 0 !important;
-}
-
-/* 3. Profile & Cover Photo — visual polish only, no layout/structure change */
-.ep-file-zone {
-  transition: border-color .15s ease, background-color .15s ease, box-shadow .15s ease;
-}
-.ep-file-zone:hover {
-  border-color: #0B3D2E !important;
-  background: #f0f6ff !important;
-  box-shadow: 0 2px 6px rgba(10,102,194,0.10);
-}
-.ep-avatar-preview,
-.ep-cover-preview-wrapper {
-  transition: box-shadow .15s ease;
-}
-
-/* Responsive stacking on small screens (mobile) */
-@media (max-width: 560px) {
-  .ep-avatar-row {
-    flex-direction: column !important;
-    align-items: stretch !important;
-  }
-  .ep-avatar-preview {
-    align-self: center;
-  }
-}
-
-/* 2. Skills Field Unconditional Force Display */
-.ep-card .ep-section-body .ep-form-group {
-  display: flex !important;
-  flex-direction: column !important;
-  width: 100% !important;
-  margin-bottom: 12px !important;
-}
-/* Force inputs under skills to be visible if Django template tags are failing */
-.ep-card .ep-section-body input[name="skills"],
-.ep-card .ep-section-body #id_skills {
-  display: block !important;
-  width: 100% !important;
-  border: 1.5px solid var(--border) !important;
-  border-radius: 8px !important;
-  padding: 10px 14px !important;
-  background: #ffffff !important;
-}
-
-/* 3. Work Experience Stacked Fix (Anti-Messy Grid Reset) */
-/* Past experience headers standard block styling */
-div[class*="Past Experience"], 
-p:has(i.fa-history),
-.ep-section-body div:contains("Past Experience") {
-  grid-column: 1 / -1 !important;
-  width: 100% !important;
-  font-weight: 700 !important;
-  margin-top: 20px !important;
-  padding-top: 15px !important;
-  border-top: 1px dashed var(--border) !important;
-  color: var(--brand) !important;
-}
-
-/* Force past experience sub-fields to stack cleanly instead of turning messy */
-.ep-grid-2 {
-  display: flex !important;
-  flex-direction: column !important;
-  gap: 16px !important;
-}
-
-/* Labels layout adjustment for clean stacked reading */
-.ep-label {
-  margin-bottom: 6px !important;
-  font-size: 11px !important;
-  color: var(--text-muted) !important;
-}
-
-/* Perfect full-width textboxes */
-.ep-section-body input.form-control,
-.ep-section-body input {
-  width: 100% !important;
-  max-width: 100% !important;
-  display: block !important;
-  border: 1.5px solid var(--border) !important;
-  border-radius: 8px !important;
-  padding: 11px 14px !important;
-  box-sizing: border-box !important;
-}
-
-
 </style>
 
-<div class="content-wrapper" style="background: var(--surface, #F3F2EE) !important; min-height: 100vh;">
+<div class="content-wrapper" style="background: var(--surface) !important; min-height: 100vh;">
 <section class="content" style="padding: 24px 0;">
 <div class="ep-wrapper">
 
-  
-  <!-- ════ DYNAMIC BREADCRUMB FIX ════ -->
+  <!-- Breadcrumb -->
   <div class="ep-breadcrumb">
     {% if role == 'student' %}
       <a href="{% url 'accounts:student_dashboard' %}">
@@ -437,533 +214,271 @@ p:has(i.fa-history),
     <span>Edit</span>
   </div>
 
-
-
   <!-- Page heading -->
   <p class="ep-page-title">Edit Profile</p>
   <p class="ep-page-sub">Keep your profile up to date so the community can know you better.</p>
 
-  <!-- Profile completion bar -->
-  <div class="ep-progress-bar-wrap" id="progress-wrap" title="Profile completeness">
-    <div class="ep-progress-bar" id="progress-bar" style="width: 0%;"></div>
-  </div>
-
   {% if messages %}
     {% for message in messages %}
-    <div class="ep-alert ep-alert-info">
+    <div class="ep-alert">
       <i class="fas fa-info-circle"></i>
       <span>{{ message }}</span>
     </div>
     {% endfor %}
   {% endif %}
 
-  <form method="POST" enctype="multipart/form-data" id="edit-profile-form" novalidate>
+  <form method="POST" enctype="multipart/form-data" id="edit-profile-form">
     {% csrf_token %}
-<!-- ════ PHOTO SECTION ════ -->
-<div class="ep-card">
-  <div class="ep-section-header">
-    <div class="ep-section-icon"><i class="fas fa-camera"></i></div>
-    <div>
-      <p class="ep-section-title">Profile &amp; Cover Photo</p>
-      <p class="ep-section-desc">Recommended: 400×400 for profile, 1400×400 for cover</p>
-    </div>
-  </div>
-  <div class="ep-section-body" style="display: flex; flex-direction: column; gap: 20px;">
 
-    <!-- 1. Profile pic row -->
-    <div class="ep-avatar-row" style="display: flex; align-items: center; gap: 16px;">
-      {% if profile.profile_pic %}
-        <img src="{{ profile.profile_pic.url }}"
-             class="ep-avatar-preview" id="avatar-preview" alt="Your avatar"
-             style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 3px solid #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.15); flex-shrink: 0;">
-      {% else %}
-        <img src="https://ui-avatars.com/api/?name={{ profile.user.get_full_name|urlencode|default:profile.user.username }}&background=0B3D2E&color=ffffff&size=128"
-             class="ep-avatar-preview" id="avatar-preview" alt="Your avatar"
-             style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 3px solid #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.15); flex-shrink: 0;">
-      {% endif %}
-      
-      <!-- Profile Upload Dropzone -->
-      <label for="id_profile_pic_upload" class="ep-file-zone" style="flex: 1; display: flex; align-items: center; gap: 12px; padding: 14px; border: 1.5px dashed #b4c6e7; background: #f8fafc; border-radius: 10px; cursor: pointer; margin: 0;">
-        <div class="ep-file-icon" style="background: #E4F1EA; color: #0B3D2E; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0;">
-          <i class="fas fa-user-circle"></i>
+    <!-- ════ PHOTO SECTION ════ -->
+    <div class="ep-card">
+      <div class="ep-section-header">
+        <div class="ep-section-icon"><i class="fas fa-camera"></i></div>
+        <div>
+          <p class="ep-section-title">Profile &amp; Cover Photo</p>
+          <p class="ep-section-desc">Recommended: Square for profile, Banner for cover</p>
         </div>
-        <div class="ep-file-label" style="text-align: left;">
-          <strong style="display: block; font-size: 14px; color: #0B3D2E;">Profile Photo</strong>
-          <span style="font-size: 11px; color: #666; display: block; margin-top: 2px;">Click to upload · JPG, PNG, GIF · Max 5MB</span>
-        </div>
-        <!-- CRITICAL FIX: Hide native file input fully -->
-        <input type="file" name="profile_pic" id="id_profile_pic_upload" accept="image/*" style="position: absolute; width: 1px; height: 1px; opacity: 0; overflow: hidden;">
-      </label>
-    </div>
+      </div>
+      <div class="ep-section-body" style="display: flex; flex-direction: column; gap: 20px;">
 
-    <!-- 2. Cover photo row -->
-    <div style="display: flex; flex-direction: column; gap: 8px;">
-      
-      <!-- Live Real-Time Banner Preview -->
-      <div class="ep-cover-preview-wrapper" style="width: 100%; height: 110px; border-radius: 10px; overflow: hidden; background: #eef3f8; border: 1px solid #e0e0e0; position: relative;">
-        {% if profile.cover_photo %}
-          <img src="{{ profile.cover_photo.url }}" alt="Cover Preview" id="cover-preview" style="width: 100%; height: 100%; object-fit: cover;">
-        {% else %}
-          <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: #7f8c8d; font-size: 13px; font-weight: 500;">
-            <i class="far fa-image" style="margin-right: 6px; font-size: 16px;"></i> Default Cover Banner Active
+        <!-- 1. Profile pic row -->
+        <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">
+          {% if profile.profile_pic %}
+            <img src="{{ profile.profile_pic.url }}"
+                 class="ep-avatar-preview" id="avatar-preview" alt="Avatar"
+                 style="width: 72px; height: 72px; border-radius: 50%; object-fit: cover; border: 2px solid #fff; box-shadow: var(--shadow);">
+          {% else %}
+            <img src="https://ui-avatars.com/api/?name={{ request.user.username }}&background=0B3D2E&color=ffffff&size=128"
+                 class="ep-avatar-preview" id="avatar-preview" alt="Avatar"
+                 style="width: 72px; height: 72px; border-radius: 50%; object-fit: cover; border: 2px solid #fff; box-shadow: var(--shadow);">
+          {% endif %}
+          
+          <label for="id_profile_pic_upload" class="ep-file-zone" style="flex: 1; margin: 0;">
+            <div class="ep-file-icon"><i class="fas fa-user-circle"></i></div>
+            <div class="ep-file-label">
+              <strong>Profile Photo</strong>
+              <span>Click to upload photo (JPG, PNG · Max 5MB)</span>
+            </div>
+            <input type="file" name="profile_pic" id="id_profile_pic_upload" accept="image/*">
+          </label>
+        </div>
+
+        <!-- 2. Cover photo row -->
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          <div style="width: 100%; height: 100px; border-radius: 8px; overflow: hidden; background: #e0e0e0; position: relative;">
+            {% if profile.cover_photo %}
+              <img src="{{ profile.cover_photo.url }}" alt="Cover Preview" id="cover-preview" style="width: 100%; height: 100%; object-fit: cover;">
+            {% else %}
+              <div id="cover-preview-placeholder" style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: #666; font-size: 13px;">
+                <i class="far fa-image" style="margin-right: 6px;"></i> Default Cover Banner Active
+              </div>
+              <img src="" alt="Cover Preview" id="cover-preview" style="width: 100%; height: 100%; object-fit: cover; display: none;">
+            {% endif %}
           </div>
-        {% endif %}
+
+          <label for="id_cover_photo_upload" class="ep-file-zone" style="margin: 0;">
+            <div class="ep-file-icon"><i class="fas fa-image"></i></div>
+            <div class="ep-file-label">
+              <strong>Cover Banner</strong>
+              <span>Click to upload banner (JPG, PNG · Max 10MB)</span>
+            </div>
+            <input type="file" name="cover_photo" id="id_cover_photo_upload" accept="image/*">
+          </label>
+        </div>
+
+      </div>  
+    </div>
+
+    <!-- ════ PROFILE HEADLINE & BIO ════ -->
+    <div class="ep-card">
+      <div class="ep-section-header">
+        <div class="ep-section-icon"><i class="fas fa-user"></i></div>
+        <div>
+          <p class="ep-section-title">Headline &amp; Basic Info</p>
+          <p class="ep-section-desc">This appears below your name on your profile card.</p>
+        </div>
       </div>
 
-      <!-- Cover Upload Dropzone -->
-      <label for="id_cover_photo_upload" class="ep-file-zone" style="display: flex; align-items: center; gap: 12px; padding: 14px; border: 1.5px dashed #cccccc; background: #fdfdfd; border-radius: 10px; cursor: pointer; margin: 0;">
-        <div class="ep-file-icon" style="background: #f0f0f0; color: #555; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0;">
-          <i class="fas fa-image"></i>
+      <div class="ep-section-body">
+        <div class="ep-form-group">
+          <label class="ep-label">Headline / Short Bio</label>
+          <textarea name="bio" class="ep-input" rows="2" maxlength="150" placeholder="e.g. Aspiring AI Engineer | Django Developer">{{ profile.bio|default:'' }}</textarea>
+          <span class="ep-help-text">Keep it short and professional (max 150 characters).</span>
         </div>
-        <div class="ep-file-label" style="text-align: left;">
-          <strong style="display: block; font-size: 14px; color: #333;">Cover Photo</strong>
-          <span style="font-size: 11px; color: #666; display: block; margin-top: 2px;">Click to upload · JPG, PNG · Max 10MB</span>
+
+        {% if role == 'student' %}
+        <div class="ep-form-group" style="margin-top: 14px;">
+          <label class="ep-label">Batch Year</label>
+          <input type="number" name="batch_year" class="ep-input" placeholder="e.g. 2026" value="{{ student.batch_year|default:profile.batch_year|default:'' }}">
         </div>
-        <!-- CRITICAL FIX: Hide native file input fully -->
-        <input type="file" name="cover_photo" id="id_cover_photo_upload" accept="image/*" style="position: absolute; width: 1px; height: 1px; opacity: 0; overflow: hidden;">
-      </label>
+        {% endif %}
+
+        {% if role == 'alumni' %}
+        <div class="ep-form-group" style="margin-top: 14px;">
+          <label class="ep-label">Current Job Title</label>
+          <input type="text" name="job_title" class="ep-input" placeholder="e.g. Senior Software Engineer" value="{{ alumni.job_title|default:profile.job_title|default:'' }}">
+        </div>
+        {% endif %}
+
+        {% if role == 'faculty' %}
+        <div class="ep-form-group" style="margin-top: 14px;">
+          <label class="ep-label">Academic Designation</label>
+          <input type="text" name="current_designation" class="ep-input" placeholder="e.g. Assistant Professor / HOD" value="{{ faculty.current_designation|default:profile.current_designation|default:'' }}">
+        </div>
+        {% endif %}
+      </div>
     </div>
-
-  </div>  
-</div>
-<!-- ════ END PHOTO SECTION ════ -->
-
-<!-- profile info -->
-<div class="ep-card">
-  <div class="ep-section-header">
-    <div class="ep-section-icon">
-      <i class="fas fa-user"></i>
-    </div>
-
-    <div>
-      <p class="ep-section-title">Profile Headline &amp; Custom Metadata</p>
-      <p class="ep-section-desc">
-        This appears below your name on your profile.
-      </p>
-    </div>
-  </div>
-
-  <div class="ep-section-body">
-
-    <!--headline-->  
-    <div class="ep-form-group">
-     <label class="ep-label">
-        Headline
-      </label>
-
-      <textarea
-        name="bio"
-        class="ep-input"
-        rows="2"
-        maxlength="150"
-        placeholder="e.g. Aspiring AI Engineer | Django Developer"
-      >{{ profile.bio }}</textarea>
-
-      <span class="ep-help-text">
-        Keep it short and professional.
-      </span>
-
-    </div>
-
-    {% if role == 'student' %}
-    <div class="ep-form-group" style="margin-top: 20px;">
-      <label class="ep-label">Batch Year</label>
-      <input 
-        type="number" 
-        name="batch_year" 
-        class="ep-input" 
-        placeholder="e.g. 2026"
-        value="{{ student.batch_year|default:profile.batch_year|default:'' }}"
-      >
-      <span class="ep-help-text">Your graduation or current batch year.</span>
-    </div>
-    {% endif %}
-
-    {% if role == 'alumni' %}
-    <div class="ep-form-group" style="margin-top: 20px;">
-      <label class="ep-label">Current Job Title / Designation</label>
-      <input 
-        type="text" 
-        name="current_designation" 
-        class="ep-input" 
-        placeholder="e.g. Senior Software Engineer at Google"
-        value="{{ alumni.job_title|default:profile.job_title|default:'' }}"
-      >
-      <span class="ep-help-text">This customized job title will display right under your name.</span>
-    </div>
-
-    {% endif %}
-    
-    {% if role == 'faculty' %}
-    <div class="ep-form-group" style="margin-top: 20px;">
-      <label class="ep-label"> Designation </label>
-      <input 
-        type="text" 
-        name="current_designation" 
-        class="ep-input" 
-        placeholder="e.g. Assistant Professor / HOD"
-        value="{{ faculty.current_designation|default:profile.current_designation|default:'' }}"
-      >
-      <span class="ep-help-text">Enter your current academic position.</span>
-    </div>
-    {% endif %}
-
-
-  </div>
-</div>
 
     <!-- ════ ABOUT ════ -->
     <div class="ep-card">
       <div class="ep-section-header">
         <div class="ep-section-icon"><i class="fas fa-align-left"></i></div>
         <div>
-          <p class="ep-section-title">About</p>
-          <p class="ep-section-desc"> Tell others about yourself, interests, projects and goals.</p>
+          <p class="ep-section-title">About You</p>
+          <p class="ep-section-desc">Tell the community about your background, projects, and interests.</p>
         </div>
       </div>
       <div class="ep-section-body">
-        <div class="ep-grid-1">
-          {% for field in form %}
-            {% if field.name == "about" %}
-            <div class="ep-form-group ep-col-span-2">
-              <label class="ep-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
-              {{ field }}
-              {% if field.help_text %}
-                <span class="ep-help-text">{{ field.help_text }}</span>
-              {% endif %}
-              {% for error in field.errors %}
-                <span class="ep-error"><i class="fas fa-exclamation-circle"></i> {{ error }}</span>
-              {% endfor %}
-            </div>
-            {% endif %}
-          {% endfor %}
+        <div class="ep-form-group">
+          <label class="ep-label">About Summary</label>
+          <textarea name="about" class="ep-input" rows="4" placeholder="Write a brief overview about yourself...">{{ profile.about|default:'' }}</textarea>
         </div>
       </div>
     </div>
-    <!-- ════ END ABOUT ════ -->
 
-
-  <!-- ════ EDUCATION ════ -->
-{% if role == 'student' or role == 'alumni' %}
-<div class="ep-card">
-  <div class="ep-section-header">
-    <div class="ep-section-icon"><i class="fas fa-university"></i></div>
-    <div>
-      <p class="ep-section-title">Education</p>
-      <p class="ep-section-desc">Your academic background</p>
-    </div>
-  </div>
-  <div class="ep-section-body">
-    
-    <div class="ep-form-group" style="margin-bottom: 20px;">
-      <label class="ep-label">Current/Primary Institution</label>
-      <p style="font-size: 15px; font-weight: 600; color: #333; margin: 6px 0 0 0;">
-        {{ request.user.institution.name|default:"Your Registered Institution" }}
-      </p>
-      <small style="color: var(--text-muted); font-size: 11px; font-style: italic;">(Institution name cannot be changed)</small>
-    </div>
+    <!-- ════ EDUCATION ════ -->
+    {% if role == 'student' or role == 'alumni' %}
+    <div class="ep-card">
+      <div class="ep-section-header">
+        <div class="ep-section-icon"><i class="fas fa-university"></i></div>
+        <div>
+          <p class="ep-section-title">Education</p>
+          <p class="ep-section-desc">Your academic details</p>
+        </div>
+      </div>
+      <div class="ep-section-body">
         
-    {% if role == 'student' %}
-    <div class="ep-grid-2">
-      <div class="ep-form-group">
-        <label class="ep-label">Department</label>
-        <input type="text" name="department" class="form-control" 
-               placeholder="e.g. Computer Science & Engineering"
-               value="{{ student.department|default:profile.department|default:'' }}"
-               style="width: 100%; border: 1.5px solid var(--border); border-radius: 8px; padding: 10px 14px; background: #fff;">
-      </div>
-      
-      <div class="ep-form-group">
-        <label class="ep-label">Batch Year</label>
-        <input type="number" name="batch_year" class="form-control" 
-               placeholder="e.g. 2026"
-               value="{{ student.batch_year|default:profile.batch_year|default:'' }}"
-               style="width: 100%; border: 1.5px solid var(--border); border-radius: 8px; padding: 10px 14px; background: #fff;">
-      </div>
-    </div>
-    {% endif %}
-
-    <!-- ─── ALUMNI FLOW ─── -->
-    {% if role == 'alumni' %}
-    <div class="ep-grid-2" style="margin-bottom: 24px; display: flex; flex-direction: column; gap: 16px;">
-      <div class="ep-form-group">
-        <!-- FIXED NAME: alumni model field se exact match karne ke liye 'recent_degree' kiya -->
-        <label class="ep-label">Degree/Courses</label>
-        <input type="text" name="recent_degree" class="form-control" 
-               placeholder="e.g. B.Tech / M.Tech / MBA"
-               value="{{ alumni.recent_degree|default:profile.recent_degree|default:'' }}"
-               style="width: 100%; border: 1.5px solid var(--border); border-radius: 8px; padding: 10px 14px; background: #fff;">
-      </div>
-      
-      <div class="ep-form-group">
-        <!-- FIXED NAME: alumni model field se exact match karne ke liye 'batch' kiya -->
-        <label class="ep-label">Passing Year</label>
-        <input type="number" name="batch" class="form-control" 
-               placeholder="e.g. 2022"
-               value="{{ alumni.batch|default:profile.batch|default:'' }}"
-               style="width: 100%; border: 1.5px solid var(--border); border-radius: 8px; padding: 10px 14px; background: #fff;">
-      </div>
-    </div>
-
-    <!-- Optional: Last Attended Institution for Alumni -->
-    <hr style="border: 0; border-top: 1px dashed #ddd; margin: 24px 0;">
-    <p style="font-size: 15px; font-weight: 600; color: #0B3D2E; margin-bottom: 12px;">
-      <i class="fas fa-history" style="margin-right: 6px;"></i> Previous / Institution (Optional)
-    </p>
-
-    <div class="ep-form-group" style="margin-bottom: 16px;">
-      <label class="ep-label">Past University / Institution</label>
-      <input type="text" name="past_university1" class="form-control" 
-             placeholder="e.g. Stanford University / ABC College"
-             value="{{ alumni.past_university1|default:profile.past_university1|default:'' }}"
-             style="width: 100%; border: 1.5px solid var(--border); border-radius: 8px; padding: 10px 14px; background: #fff;">
-    </div>
-
-    <div class="ep-grid-2" style="display: flex; flex-direction: column; gap: 16px;">
-      <div class="ep-form-group">
-        <label class="ep-label">Degree</label>
-        <input type="text" name="past_degree_course1" class="form-control" 
-               placeholder="e.g. M.S / Diploma"
-               value="{{ alumni.past_degree_course1|default:profile.past_degree_course1|default:'' }}"
-               style="width: 100%; border: 1.5px solid var(--border); border-radius: 8px; padding: 10px 14px; background: #fff;">
-      </div>
-      
-      <div class="ep-form-group">
-        <label class="ep-label">Passing Year</label>
-        <input type="number" name="batch1" class="form-control" 
-               placeholder="e.g. 2024"
-               value="{{ alumni.batch1|default:profile.batch1|default:'' }}"
-               style="width: 100%; border: 1.5px solid var(--border); border-radius: 8px; padding: 10px 14px; background: #fff;">
-      </div>
-    </div>
-    {% endif %}
-
-  </div>
-</div>
-{% endif %}
-<!-- ════ END EDUCATION ════ -->    
-  
-
-<!-- ════ WORK EXPERIENCE ════ -->
-{% if role == 'faculty' or role == 'alumni' %}
-<div class="ep-card" style="margin-top: 20px;">
-  <div class="ep-section-header">
-    <div class="ep-section-icon"><i class="fas fa-briefcase"></i></div>
-    <div>
-      <p class="ep-section-title">Work Experience</p>
-      <p class="ep-section-desc">Manage your current professional role and career history</p>
-    </div>
-  </div>
-  
-  <div class="ep-section-body">
-    
-    <!-- ─── CURRENT POSITION ─── -->
-    <p style="font-size: 15px; font-weight: 600; color: #0B3D2E; margin-bottom: 16px; display: flex; align-items: center; gap: 6px;">
-      <i class="fas fa-dot-circle" style="font-size: 10px;"></i> Current Position
-    </p>
-
-    <div class="ep-grid-2" style="margin-bottom: 24px;">
-      
-      <!-- Company / Institution Name -->
-      <div class="ep-form-group">
-        <label class="ep-label">Company / Institution Name</label>
-        {% if role == 'faculty' %}
-          <!-- Faculty Ke Liye Locked: hidden input backend me data bhejega -->
-          <div style="padding: 10px 0 4px 0;">
-            <p style="font-size: 15px; font-weight: 600; color: #333; margin: 0;">
-              {{ request.user.institution.name|default:"Your Registered Institution" }}
-            </p>
-            <input type="hidden" name="current_company" value="{{ request.user.institution.name }}">
-            <small style="color: var(--text-muted); font-size: 11px; font-style: italic;">(Your current institution cannot be changed)</small>
+        <div class="ep-form-group" style="margin-bottom: 16px;">
+          <label class="ep-label">Institution</label>
+          <p style="font-size: 15px; font-weight: 600; color: #333; margin: 4px 0 0 0;">
+            {{ request.user.institution.name|default:"Registered Institution" }}
+          </p>
+        </div>
+            
+        {% if role == 'student' %}
+        <div class="ep-grid-2">
+          <div class="ep-form-group">
+            <label class="ep-label">Department / Branch</label>
+            <input type="text" name="department" class="ep-input" placeholder="e.g. Computer Science" value="{{ student.department|default:'' }}">
           </div>
-        {% else %}
-          <!-- Alumni Ke Liye Fully Editable 'current_company' -->
-          <input type="text" name="current_company" class="ep-input" 
-                 placeholder="e.g. Google / Microsoft / Razorpay"
-                 value="{{ alumni.current_company|default:profile.current_company|default:'' }}">
+          
+          <div class="ep-form-group">
+            <label class="ep-label">Batch Year</label>
+            <input type="number" name="batch_year" class="ep-input" placeholder="e.g. 2026" value="{{ student.batch_year|default:'' }}">
+          </div>
+        </div>
         {% endif %}
-      </div>
 
-      <!-- Designation / Job Title -->
-      <div class="ep-form-group">
-        <label class="ep-label">Designation / Job Title</label>
-        {% if role == 'faculty' %}
-          <input type="text" name="current_designation" class="ep-input" placeholder="e.g. Assistant Professor"
-                 value="{{ faculty.current_designation|default:profile.current_designation|default:'' }}">
-        {% else %}
-          <!-- Alumni ke model me field ka naam 'job_title' hai -->
-         <!-- Line 594-597 ka simple substitute safe look -->
-         <input type="text" name="job_title" class="ep-input" placeholder="e.g. Senior Software Engineer"
-          value="{{ profile.job_title|default:'' }}">
+        {% if role == 'alumni' %}
+        <div class="ep-grid-2">
+          <div class="ep-form-group">
+            <label class="ep-label">Degree / Course</label>
+            <input type="text" name="recent_degree" class="ep-input" placeholder="e.g. B.Tech / MBA" value="{{ alumni.recent_degree|default:'' }}">
+          </div>
+          
+          <div class="ep-form-group">
+            <label class="ep-label">Graduation Year</label>
+            <input type="number" name="batch" class="ep-input" placeholder="e.g. 2022" value="{{ alumni.batch|default:'' }}">
+          </div>
+        </div>
         {% endif %}
-      </div>
 
-     <!-- Joining Year ('current_join_year' dono me common hai) -->
-      <div class="ep-form-group">
-        <label class="ep-label">Joining Year / Period</label>
-        
-        {% if role == 'faculty' %}
-          <input type="text" name="current_join_year" class="ep-input" placeholder="e.g. 2024"
-                 value="{{ faculty.current_join_year|default:'' }}">
-        {% elif role == 'alumni' %}
-          <input type="text" name="current_join_year" class="ep-input" placeholder="e.g. 2024"
-                 value="{{ alumni.current_join_year|default:'' }}">
-        {% else %}
-          <input type="text" name="current_join_year" class="ep-input" placeholder="e.g. 2024"
-                 value="{{ profile.current_join_year|default:'' }}">
-        {% endif %}
-      </div>
-
-
-    <!-- ─── PAST EXPERIENCE 1 (Optional) ─── -->
-    <hr style="border: 0; border-top: 1px dashed #ddd; margin: 28px 0 20px 0;">
-    
-    <p style="font-size: 15px; font-weight: 600; color: #555; margin-bottom: 16px; display: flex; align-items: center; gap: 6px;">
-      <i class="fas fa-history" style="font-size: 12px;"></i> Past Experience 1 <span style="font-weight: normal; font-size: 13px; color: var(--text-muted);">(Optional)</span>
-    </p>
-
-   <div class="ep-grid-2" style="margin-bottom: 24px;">
-      <div class="ep-form-group">
-        <label class="ep-label">Previous Company / College Name</label>
-        <input type="text" name="past_company_1" class="ep-input" placeholder="e.g. Wipro / XYZ University"
-               value="{{ profile.past_company_1|default:'' }}">
-      </div>
-
-      <div class="ep-form-group">
-        <label class="ep-label">Designation / Role</label>
-        <input type="text" name="past_designation_1" class="ep-input" placeholder="e.g. Software Engineer / Lecturer"
-               value="{{ profile.past_designation_1|default:profile.past_designation_1|default:profile.past_designation_1|default:'' }}">
-      </div>
-
-      <div class="ep-form-group">
-        <label class="ep-label">Timeline / Period</label>
-        <input type="text" name="past_timeline_1" class="ep-input" placeholder="e.g. 2021–2023"
-               value="{{ profile.past_timeline_1|default:profile.past_timeline_1|default:profile.past_timeline_1|default:'' }}">
       </div>
     </div>
+    {% endif %}
 
-    <!-- ─── PAST EXPERIENCE 2 (Optional) ─── -->
-    <hr style="border: 0; border-top: 1px dashed #ddd; margin: 24px 0 20px 0;">
-
-    <p style="font-size: 15px; font-weight: 600; color: #555; margin-bottom: 16px; display: flex; align-items: center; gap: 6px;">
-      <i class="fas fa-history" style="font-size: 12px;"></i> Past Experience 2 <span style="font-weight: normal; font-size: 13px; color: var(--text-muted);">(Optional)</span>
-    </p>
-
-    <div class="ep-grid-2">
-      <div class="ep-form-group">
-        <label class="ep-label">Previous Company / College Name</label>
-        <input type="text" name="past_company_2" class="ep-input" placeholder="e.g. Tech Mahindra"
-               value="{{ profile.past_company_2|default:profile.past_company_2|default:profile.past_company_2|default:'' }}">
+    <!-- ════ WORK EXPERIENCE ════ -->
+    {% if role == 'faculty' or role == 'alumni' %}
+    <div class="ep-card">
+      <div class="ep-section-header">
+        <div class="ep-section-icon"><i class="fas fa-briefcase"></i></div>
+        <div>
+          <p class="ep-section-title">Work Experience</p>
+          <p class="ep-section-desc">Manage your current and past professional experience</p>
+        </div>
       </div>
-
-      <div class="ep-form-group">
-        <label class="ep-label">Designation / Role</label>
-        <input type="text" name="past_designation_2" class="ep-input" placeholder="e.g. Junior Developer"
-               value="{{ profile.past_designation_2|default:profile.past_designation_2|default:profile.past_designation_2|default:'' }}">
-      </div>
-
-      <div class="ep-form-group">
-        <label class="ep-label">Timeline / Period</label>
-        <input type="text" name="past_timeline_2" class="ep-input" placeholder="e.g. 2019–2021"
-               value="{{ profile.past_timeline_2|default:profile.past_timeline_2|default:profile.past_timeline_2|default:'' }}">
-      </div>
-    </div>
-
-  </div>
-</div>
-{% endif %}
-<!-- ════ END WORK EXPERIENCE ════ -->
-
-
-
-<!-- ════ FACULTY RESEARCH & PUBLICATIONS CARD ════ -->
-{% if role == 'faculty' %}
-<div class="ep-card">
-  <div class="ep-section-header">
-    <div class="ep-section-icon"><i class="fas fa-book-reader"></i></div>
-    <div>
-      <p class="ep-section-title">Research & Publications</p>
-      <p class="ep-section-desc">Showcase your academic papers, journals, and conference presentations</p>
-    </div>
-  </div>
-  
-  <div class="ep-section-body">
-    <div class="ep-form-group">
-      <label class="ep-label">Publications (Enter each on a new line)</label>
       
-      <textarea 
-        name="research_publications" 
-        class="form-control" 
-        rows="6" 
-        placeholder="1. 'AI in Higher Education' - International Journal of Computer Science, 2025&#10;2. 'Machine Learning Trends' - IEEE Conference, 2026"
-        style="width: 100%; border: 1.5px solid var(--border, #e0e0e0); border-radius: 8px; padding: 12px 14px; background: #fff; font-family: inherit; font-size: 14px; line-height: 1.5; resize: vertical;"
-      >{{ profile.research_publications|default:profile.research_publications|default:'' }}</textarea>
-      
-      <span class="ep-help-text" style="display: block; margin-top: 8px; font-size: 12px; color: var(--text-muted, #777); font-style: italic;">
-        <i class="fas fa-lightbulb" style="color: #0B3D2E; margin-right: 4px;"></i> Pro-tip: Press Enter after each publication to present them as a clean list.
-      </span>
+      <div class="ep-section-body">
+        <p style="font-size: 14px; font-weight: 600; color: var(--brand); margin-bottom: 12px;">Current Position</p>
+
+        <div class="ep-grid-2">
+          <div class="ep-form-group">
+            <label class="ep-label">Company / Organization</label>
+            {% if role == 'faculty' %}
+              <input type="text" readonly class="ep-input" value="{{ request.user.institution.name }}">
+              <input type="hidden" name="current_company" value="{{ request.user.institution.name }}">
+            {% else %}
+              <input type="text" name="current_company" class="ep-input" placeholder="e.g. Google / Microsoft" value="{{ alumni.current_company|default:'' }}">
+            {% endif %}
+          </div>
+
+          <div class="ep-form-group">
+            <label class="ep-label">Designation / Role</label>
+            {% if role == 'faculty' %}
+              <input type="text" name="current_designation" class="ep-input" placeholder="e.g. Assistant Professor" value="{{ faculty.current_designation|default:'' }}">
+            {% else %}
+              <input type="text" name="job_title" class="ep-input" placeholder="e.g. Senior Engineer" value="{{ alumni.job_title|default:'' }}">
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Past Experience Section -->
+        <hr style="border: 0; border-top: 1px dashed var(--border); margin: 20px 0;">
+        <p style="font-size: 14px; font-weight: 600; color: var(--text-muted); margin-bottom: 12px;"><i class="fas fa-history"></i> Past Experience (Optional)</p>
+
+        <div class="ep-grid-2">
+          <div class="ep-form-group">
+            <label class="ep-label">Previous Company Name</label>
+            <input type="text" name="past_company_1" class="ep-input" placeholder="e.g. Wipro / Infosys" value="{{ profile.past_company_1|default:'' }}">
+          </div>
+
+          <div class="ep-form-group">
+            <label class="ep-label">Past Role / Designation</label>
+            <input type="text" name="past_designation_1" class="ep-input" placeholder="e.g. Software Developer" value="{{ profile.past_designation_1|default:'' }}">
+          </div>
+        </div>
+
+      </div>
     </div>
-  </div>
-</div>
-{% endif %}
-<!-- ════ END FACULTY RESEARCH & PUBLICATIONS CARD ════ -->
+    {% endif %}
 
-<!-- ════ SKILLS ════ -->
-{% if role == 'student' or role == 'alumni' %}
-<div class="ep-card">
-  <div class="ep-section-header">
-    <div class="ep-section-icon"><i class="fas fa-tools"></i></div>
-    <div>
-      <p class="ep-section-title">Skills</p>
-      <p class="ep-section-desc">Comma-separated — e.g. Python, Django, SQL, Machine Learning</p>
+    <!-- ════ SKILLS CARD ════ -->
+    {% if role == 'student' or role == 'alumni' %}
+    <div class="ep-card">
+      <div class="ep-section-header">
+        <div class="ep-section-icon"><i class="fas fa-tools"></i></div>
+        <div>
+          <p class="ep-section-title">Skills &amp; Expertise</p>
+          <p class="ep-section-desc">Add key skills separated by commas</p>
+        </div>
+      </div>
+      <div class="ep-section-body">
+        <div class="ep-form-group">
+          <label class="ep-label">Skills</label>
+          <input type="text" name="skills" class="ep-input" placeholder="e.g. Python, Django, JavaScript, Machine Learning" value="{{ profile.skills|default:'' }}">
+          <span class="ep-help-text">Separate skills with commas.</span>
+        </div>
+      </div>
     </div>
-  </div>
-  <div class="ep-section-body">
-    
-    <!-- Smart Wrapper: Yeh guaranteed data lekar hi aayega -->
-    <div class="ep-form-group">
-      <label class="ep-label" for="id_skills">Skills</label>
-      
-      {% if form.skills %}
-        <!-- Case 1: Agar Django form field valid hai, toh backend errors aur binding ke sath widget render hoga -->
-        {{ form.skills }}
-      {% else %}
-        <!-- Case 2: Agar form field match nahi hui, toh profile object se saved data directly pull hoga -->
-        <input type="text" 
-               name="skills" 
-               id="id_skills" 
-               class="form-control" 
-               value="{% if form.initial.skills %}{{ form.initial.skills }}{% else %}{{ profile.skills|default:'' }}{% endif %}" 
-               placeholder="Python, Django, SQL, Machine Learning...">
-      {% endif %}
+    {% endif %}
 
-      <!-- Error Handling (If any) -->
-      {% if form.skills.errors %}
-        {% for error in form.skills.errors %}
-          <span class="ep-error"><i class="fas fa-exclamation-circle"></i> {{ error }}</span>
-        {% endfor %}
-      {% endif %}
-    </div>
-
-    <!-- Skill preview (JavaScript se dynamic chips render karne ke liye) -->
-    <div id="skill-preview" style="display:flex; flex-wrap:wrap; gap:7px; margin-top:12px;"></div>
-  </div>
-</div>
-{% endif %}
-<!-- ════ END SKILLS ════ -->
-
-
-    <!-- ════ STICKY ACTION BAR ════ -->
+    <!-- ════ STICKY SAVE BAR ════ -->
     <div class="ep-action-bar">
-      <span class="ep-action-left">
-        <i class="fas fa-lock" style="font-size:12px;"></i>
-        Your information is private and secure.
-      </span>
-      <div style="display:flex; gap:10px; align-items:center;">
-        <!-- FIX: Cancel bhejega wapas Profile View par -->
-        <a href="{% url 'accounts:view_profile' %}" class="ep-btn-outline" style="text-decoration: none;">
-          <i class="fas fa-times"></i> Cancel
-        </a>
+      <div style="font-size: 13px; color: var(--text-muted);">
+        <i class="fas fa-shield-alt"></i> Your information is secure.
+      </div>
+      <div style="display: flex; gap: 10px;">
+        <a href="{% url 'accounts:view_profile' %}" class="ep-btn-outline">Cancel</a>
         <button type="submit" class="ep-btn-primary">
           <i class="fas fa-save"></i> Save Changes
         </button>
@@ -975,98 +490,38 @@ p:has(i.fa-history),
 </div>
 </section>
 </div>
+
 {% endblock %}
 
 {% block extra_js %}
 <script>
-  /* ── Profile photo preview ── */
+  // Dynamic Real-time Live Image Previews
   document.getElementById('id_profile_pic_upload')?.addEventListener('change', function(e) {
     const file = e.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = ev => {
-      document.getElementById('avatar-preview').src = ev.target.result;
-    };
-    reader.readAsDataURL(file);
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = function(event) {
+        document.getElementById('avatar-preview').src = event.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
   });
 
-  /* ── Cover photo filename feedback + live preview ── */
   document.getElementById('id_cover_photo_upload')?.addEventListener('change', function(e) {
     const file = e.target.files[0];
-    if (!file) return;
-    const label = this.closest('.ep-file-zone').querySelector('.ep-file-label strong');
-    if (label) {
-      label.innerHTML = `Cover Photo <span style="font-weight:normal; color:#0B3D2E; font-size:12px; margin-left:8px;">(${file.name})</span>`;
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = function(event) {
+        const coverImg = document.getElementById('cover-preview');
+        const placeholder = document.getElementById('cover-preview-placeholder');
+        if (coverImg) {
+          coverImg.src = event.target.result;
+          coverImg.style.display = 'block';
+        }
+        if (placeholder) placeholder.style.display = 'none';
+      };
+      reader.readAsDataURL(file);
     }
-
-    // NEW: refresh the actual cover banner preview
-    const reader = new FileReader();
-    reader.onload = ev => {
-      const wrapper = document.querySelector('.ep-cover-preview-wrapper');
-      let img = document.getElementById('cover-preview');
-      if (!img) {
-        wrapper.innerHTML = '';
-        img = document.createElement('img');
-        img.id = 'cover-preview';
-        img.alt = 'Cover Preview';
-        img.style.cssText = 'width:100%; height:100%; object-fit:cover;';
-        wrapper.appendChild(img);
-      }
-      img.src = ev.target.result;
-    };
-    reader.readAsDataURL(file);
   });
-
-
-  /* ── Skills live pill preview ── */
-  const skillsInput = document.querySelector('[name="skills"]');
-  const skillPreview = document.getElementById('skill-preview');
-
-  function renderSkillPills(val) {
-    if (!skillPreview) return;
-    skillPreview.innerHTML = '';
-    const skills = val.split(',').map(s => s.trim()).filter(Boolean);
-    skills.forEach(skill => {
-      const pill = document.createElement('span');
-      pill.style.cssText =
-        'display:inline-flex; align-items:center; gap:5px; padding:5px 13px;' +
-        'border: 1.5px solid #0B3D2E; border-radius:20px; font-size:13px;' +
-        'color:#0B3D2E; background:#E4F1EA; font-weight:500;';
-      pill.textContent = skill;
-      skillPreview.appendChild(pill);
-    });
-  }
-
-  if (skillsInput) {
-    renderSkillPills(skillsInput.value);
-    skillsInput.addEventListener('input', () => renderSkillPills(skillsInput.value));
-  }
-
-  /* ── Profile completeness bar ── */
-  function calcProgress() {
-    // Scope humesha form ke andar tak limited hona chahiye
-    const fields = document.querySelectorAll(
-      '#edit-profile-form input:not([type="file"]):not([type="hidden"]):not([type="submit"]), ' +
-      '#edit-profile-form textarea, ' +
-      '#edit-profile-form select'
-    );
-    let filled = 0;
-    fields.forEach(f => { if (f.value.trim()) filled++; });
-    return fields.length ? Math.round((filled / fields.length) * 100) : 0;
-  }
-
-  function updateProgress() {
-    const pct = calcProgress();
-    const bar = document.getElementById('progress-bar');
-    if (bar) bar.style.width = pct + '%';
-  }
-
-  // FIX: Event listener sirf is form ke inputs par hi trigger hoga, baki pure page ke tags par nahi
-  document.querySelectorAll(
-    '#edit-profile-form input:not([type="file"]):not([type="hidden"]), #edit-profile-form textarea, #edit-profile-form select'
-  ).forEach(el => el.addEventListener('input', updateProgress));
-
-  // Initialize progress bar on load
-  updateProgress();
 </script>
 {% endblock %}
